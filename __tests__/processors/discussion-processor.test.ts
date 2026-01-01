@@ -55,7 +55,7 @@ describe('DiscussionFetcher', () => {
     expect(result.debug).toBe(false)
     expect(result.result).toHaveLength(0)
     expect(result.error).toBeInstanceOf(Error)
-    expect(result.error!.message).toBe('Error message')
+    expect(result.error?.message).toBe('Error message')
   })
 
   it('should handle pagination correctly', async () => {

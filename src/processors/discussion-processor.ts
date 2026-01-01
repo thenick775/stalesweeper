@@ -1,4 +1,4 @@
-import * as core from '@actions/core'
+import { debug } from '@actions/core'
 import { buildFetchAllDiscussionsQuery } from '../query/discussion-queries'
 import {
   DiscussionNode,
@@ -24,10 +24,9 @@ export class DiscussionFetcher
     let discussions: DiscussionNode[] = []
     let cursor: string | null = null
 
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       if (this.props.verbose) {
-        core.debug(
+        debug(
           `Fetching discussions page for ${input.owner}/${input.repo}, with cursor ${cursor}`
         )
       }
@@ -49,9 +48,16 @@ export class DiscussionFetcher
         }
       }
 
-      // Data cannot be null if error is null
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const discussionsResponse = response.data!.repository.discussions
+      if (!response.data) {
+        return {
+          result: [],
+          success: false,
+          debug: this.props.debug,
+          error: new Error('Missing data in discussions response')
+        }
+      }
+
+      const discussionsResponse = response.data.repository.discussions
       discussions = discussions.concat(discussionsResponse.nodes)
       if (!discussionsResponse.pageInfo.hasNextPage) {
         break

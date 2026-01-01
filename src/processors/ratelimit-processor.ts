@@ -1,4 +1,4 @@
-import * as core from '@actions/core'
+import { debug } from '@actions/core'
 import { GraphqlProcessor } from './graphql-processor'
 import { Processor } from '../interfaces/processable'
 import {
@@ -14,7 +14,7 @@ export class GitHubRateLimitFetcher
 {
   async process(): Promise<SimulationResult<GitHubRateLimit>> {
     if (this.props.verbose) {
-      core.debug('Fetching rate limit')
+      debug('Fetching rate limit')
     }
 
     if (this.props.debug) {
@@ -36,8 +36,17 @@ export class GitHubRateLimitFetcher
       }
     }
 
+    if (!response.data) {
+      return {
+        result: { data: { rateLimit: { limit: -1, remaining: -1 } } },
+        success: false,
+        debug: this.props.debug,
+        error: new Error('Missing data in rate limit response')
+      }
+    }
+
     return {
-      result: response.data!,
+      result: response.data,
       success: true,
       debug: this.props.debug
     }
