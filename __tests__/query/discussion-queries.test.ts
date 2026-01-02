@@ -5,7 +5,7 @@ import {
 } from '../../src/query/discussion-queries'
 
 describe('discussion queries', () => {
-  it('generate fetch all discussions', async () => {
+  it('generate fetch all discussions', () => {
     const query = buildFetchAllDiscussionsQuery('my-owner', 'my-repo', null)
     expect(query).toEqual(`
 query {
@@ -29,7 +29,7 @@ query {
   }
 }`)
   })
-  it('generate fetch all discussions with cursor', async () => {
+  it('generate fetch all discussions with cursor', () => {
     const query = buildFetchAllDiscussionsQuery(
       'my-owner',
       'my-repo',
@@ -57,7 +57,7 @@ query {
   }
 }`)
   })
-  it('discussion add comment', async () => {
+  it('discussion add comment', () => {
     const query = buildDiscussionAddCommentQuery(
       'my-discussion-id',
       'my-message'
@@ -69,7 +69,7 @@ mutation {
   }
 }`)
   })
-  it('close discussion', async () => {
+  it('close discussion', () => {
     const query = buildCloseDiscussionQuery('my-discussion-id', 'OUTDATED')
     expect(query).toEqual(`
 mutation {

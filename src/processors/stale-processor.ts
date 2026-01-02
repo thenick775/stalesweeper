@@ -3,17 +3,18 @@ import { DiscussionNode } from '../interfaces/graphql-outputs'
 import { GraphqlProcessor } from './graphql-processor'
 import { SimulationResult } from '../interfaces/simulation-result'
 import { isBefore } from '../utils/time'
-import * as core from '@actions/core'
+import { debug } from '@actions/core'
 
 export class StaleDiscussionsValidator
   extends GraphqlProcessor
   implements Processor<DiscussionNode[], DiscussionNode[]>
 {
+  // eslint-disable-next-line @typescript-eslint/require-await -- see Processor type
   async process(
     discussions: DiscussionNode[]
   ): Promise<SimulationResult<DiscussionNode[]>> {
     if (this.props.verbose) {
-      core.debug(
+      debug(
         `Comparing discussion dates with ${this.props.threshold.toUTCString()}, to determine stale state`
       )
     }

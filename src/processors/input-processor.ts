@@ -1,7 +1,7 @@
 import { Processor } from '../interfaces/processable'
 import { DiscussionInputProps } from '../interfaces/discussion-inputs'
 import { SimulationResult } from '../interfaces/simulation-result'
-import * as core from '@actions/core'
+import { getInput } from '@actions/core'
 import { DiscussionPropsValidationError } from '../errors/discussion-props-validation-error'
 import { DiscussionCloseReason } from '../interfaces/graphql-outputs'
 
@@ -13,18 +13,20 @@ interface RawDiscussionInputProps {
   closeReason: string
 }
 
-export class DiscussionInputProcessor
-  implements Processor<undefined, DiscussionInputProps | undefined>
-{
+export class DiscussionInputProcessor implements Processor<
+  undefined,
+  DiscussionInputProps | undefined
+> {
+  // eslint-disable-next-line @typescript-eslint/require-await -- see Processor type
   async process(): Promise<SimulationResult<DiscussionInputProps | undefined>> {
-    const repoToken = core.getInput('repo-token')
-    const message = core.getInput('message')
-    const daysBeforeClose = parseInt(core.getInput('days-before-close'))
-    const category = core.getInput('category')
-    const closeUnanswered = core.getInput('close-unanswered') === 'true'
-    const closeReason = core.getInput('close-reason')
-    const verbose = core.getInput('verbose') === 'true'
-    const debug = core.getInput('dry-run') === 'true'
+    const repoToken = getInput('repo-token')
+    const message = getInput('message')
+    const daysBeforeClose = parseInt(getInput('days-before-close'))
+    const category = getInput('category')
+    const closeUnanswered = getInput('close-unanswered') === 'true'
+    const closeReason = getInput('close-reason')
+    const verbose = getInput('verbose') === 'true'
+    const debug = getInput('dry-run') === 'true'
 
     const raw: RawDiscussionInputProps = {
       repoToken,
