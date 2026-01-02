@@ -1,4 +1,4 @@
-import { debug } from '@actions/core'
+import { info } from '@actions/core'
 import { GraphqlProcessor } from './graphql-processor'
 import { Processor } from '../interfaces/processable'
 import {
@@ -14,7 +14,7 @@ export class GitHubRateLimitFetcher
 {
   async process(): Promise<SimulationResult<GitHubRateLimit>> {
     if (this.props.verbose) {
-      debug('Fetching rate limit')
+      info('Fetching rate limit')
     }
 
     if (this.props.debug) {

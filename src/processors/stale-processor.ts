@@ -3,7 +3,7 @@ import { DiscussionNode } from '../interfaces/graphql-outputs'
 import { GraphqlProcessor } from './graphql-processor'
 import { SimulationResult } from '../interfaces/simulation-result'
 import { isBefore } from '../utils/time'
-import { debug } from '@actions/core'
+import { info } from '@actions/core'
 
 export class StaleDiscussionsValidator
   extends GraphqlProcessor
@@ -14,7 +14,7 @@ export class StaleDiscussionsValidator
     discussions: DiscussionNode[]
   ): Promise<SimulationResult<DiscussionNode[]>> {
     if (this.props.verbose) {
-      debug(
+      info(
         `Comparing discussion dates with ${this.props.threshold.toUTCString()}, to determine stale state`
       )
     }

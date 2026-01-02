@@ -1,4 +1,4 @@
-import { debug } from '@actions/core'
+import { info } from '@actions/core'
 import { buildFetchAllDiscussionsQuery } from '../query/discussion-queries'
 import {
   DiscussionNode,
@@ -26,7 +26,7 @@ export class DiscussionFetcher
 
     while (true) {
       if (this.props.verbose) {
-        debug(
+        info(
           `Fetching discussions page for ${input.owner}/${input.repo}, with cursor ${cursor}`
         )
       }
