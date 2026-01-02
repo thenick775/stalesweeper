@@ -10,7 +10,7 @@ import {
   buildCloseDiscussionQuery,
   buildDiscussionAddCommentQuery
 } from '../query/discussion-queries'
-import { debug } from '@actions/core'
+import { info } from '@actions/core'
 
 export interface HandleStaleDiscussionsProps {
   discussions: DiscussionNode[]
@@ -27,7 +27,7 @@ export class HandleStaleDiscussions
   ): Promise<SimulationResult<DiscussionNode[]>> {
     for (const discussion of input.discussions) {
       if (this.props.verbose) {
-        debug(
+        info(
           `Adding comment and closing discussion with id #${discussion.number}`
         )
       }

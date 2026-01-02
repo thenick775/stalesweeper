@@ -30983,7 +30983,7 @@ async function run() {
         return;
     }
     if (inputProps.verbose) {
-        (0, core_1.debug)(`Rate limit before execution: ${JSON.stringify(beforeRateLimit.result)}`);
+        (0, core_1.info)(`Rate limit before execution: ${JSON.stringify(beforeRateLimit.result)}`);
     }
     const fetcher = new discussion_processor_1.DiscussionFetcher(inputProps);
     const discussions = await fetcher.process({
@@ -30995,7 +30995,7 @@ async function run() {
         return;
     }
     if (inputProps.verbose) {
-        (0, core_1.debug)(`Fetched discussions: ${JSON.stringify(discussions.result)}`);
+        (0, core_1.info)(`Fetched discussions: ${JSON.stringify(discussions.result)}`);
     }
     const staleValidator = new stale_processor_1.StaleDiscussionsValidator(inputProps);
     const staleDiscussions = await staleValidator.process(discussions.result);
@@ -31004,7 +31004,7 @@ async function run() {
         return;
     }
     if (inputProps.verbose) {
-        (0, core_1.debug)(`Stale discussions: ${JSON.stringify(staleDiscussions.result)}`);
+        (0, core_1.info)(`Stale discussions: ${JSON.stringify(staleDiscussions.result)}`);
     }
     const staleHandler = new handle_stale_processor_1.HandleStaleDiscussions(inputProps);
     const handledStaleDiscussions = await staleHandler.process({
@@ -31017,7 +31017,7 @@ async function run() {
         return;
     }
     if (inputProps.verbose) {
-        (0, core_1.debug)(`Processed stale discussions: ${JSON.stringify(handledStaleDiscussions.result)}`);
+        (0, core_1.info)(`Processed stale discussions: ${JSON.stringify(handledStaleDiscussions.result)}`);
     }
     const afterRateLimit = await rateLimit.process();
     if (afterRateLimit.error) {
@@ -31025,7 +31025,7 @@ async function run() {
         return;
     }
     if (inputProps.verbose) {
-        (0, core_1.debug)(`Rate limit after execution: ${JSON.stringify(afterRateLimit.result)}`);
+        (0, core_1.info)(`Rate limit after execution: ${JSON.stringify(afterRateLimit.result)}`);
     }
     (0, core_1.setOutput)('stale-discussions', handledStaleDiscussions.result);
 }
@@ -31049,7 +31049,7 @@ class DiscussionFetcher extends graphql_processor_1.GraphqlProcessor {
         let cursor = null;
         while (true) {
             if (this.props.verbose) {
-                (0, core_1.debug)(`Fetching discussions page for ${input.owner}/${input.repo}, with cursor ${cursor}`);
+                (0, core_1.info)(`Fetching discussions page for ${input.owner}/${input.repo}, with cursor ${cursor}`);
             }
             if (this.props.debug) {
                 break;
@@ -31162,7 +31162,7 @@ class HandleStaleDiscussions extends graphql_processor_1.GraphqlProcessor {
     async process(input) {
         for (const discussion of input.discussions) {
             if (this.props.verbose) {
-                (0, core_1.debug)(`Adding comment and closing discussion with id #${discussion.number}`);
+                (0, core_1.info)(`Adding comment and closing discussion with id #${discussion.number}`);
             }
             if (this.props.debug) {
                 continue;
@@ -31287,7 +31287,7 @@ const ratelimit_queries_1 = __nccwpck_require__(2704);
 class GitHubRateLimitFetcher extends graphql_processor_1.GraphqlProcessor {
     async process() {
         if (this.props.verbose) {
-            (0, core_1.debug)('Fetching rate limit');
+            (0, core_1.info)('Fetching rate limit');
         }
         if (this.props.debug) {
             return {
@@ -31339,7 +31339,7 @@ class StaleDiscussionsValidator extends graphql_processor_1.GraphqlProcessor {
     // eslint-disable-next-line @typescript-eslint/require-await -- see Processor type
     async process(discussions) {
         if (this.props.verbose) {
-            (0, core_1.debug)(`Comparing discussion dates with ${this.props.threshold.toUTCString()}, to determine stale state`);
+            (0, core_1.info)(`Comparing discussion dates with ${this.props.threshold.toUTCString()}, to determine stale state`);
         }
         const staleDiscussions = discussions.filter(discussion => {
             if (discussion.category.isAnswerable &&

@@ -1,4 +1,4 @@
-import { setFailed, debug, setOutput } from '@actions/core'
+import { setFailed, debug, setOutput, info } from '@actions/core'
 import { context } from '@actions/github'
 import { DiscussionFetcher } from './processors/discussion-processor'
 import { DiscussionInputProcessor } from './processors/input-processor'
@@ -35,7 +35,7 @@ export async function run(): Promise<void> {
     return
   }
   if (inputProps.verbose) {
-    debug(
+    info(
       `Rate limit before execution: ${JSON.stringify(beforeRateLimit.result)}`
     )
   }
@@ -51,7 +51,7 @@ export async function run(): Promise<void> {
     return
   }
   if (inputProps.verbose) {
-    debug(`Fetched discussions: ${JSON.stringify(discussions.result)}`)
+    info(`Fetched discussions: ${JSON.stringify(discussions.result)}`)
   }
 
   const staleValidator = new StaleDiscussionsValidator(inputProps)
@@ -62,7 +62,7 @@ export async function run(): Promise<void> {
     return
   }
   if (inputProps.verbose) {
-    debug(`Stale discussions: ${JSON.stringify(staleDiscussions.result)}`)
+    info(`Stale discussions: ${JSON.stringify(staleDiscussions.result)}`)
   }
 
   const staleHandler = new HandleStaleDiscussions(inputProps)
@@ -77,7 +77,7 @@ export async function run(): Promise<void> {
     return
   }
   if (inputProps.verbose) {
-    debug(
+    info(
       `Processed stale discussions: ${JSON.stringify(handledStaleDiscussions.result)}`
     )
   }
@@ -88,9 +88,7 @@ export async function run(): Promise<void> {
     return
   }
   if (inputProps.verbose) {
-    debug(
-      `Rate limit after execution: ${JSON.stringify(afterRateLimit.result)}`
-    )
+    info(`Rate limit after execution: ${JSON.stringify(afterRateLimit.result)}`)
   }
 
   setOutput('stale-discussions', handledStaleDiscussions.result)

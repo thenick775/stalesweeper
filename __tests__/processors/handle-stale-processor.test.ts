@@ -2,7 +2,7 @@ import { HandleStaleDiscussions } from '../../src/processors/handle-stale-proces
 import { DiscussionNode } from '../../src/interfaces/graphql-outputs'
 import * as core from '@actions/core'
 
-let debugMock: jest.SpiedFunction<typeof core.debug>
+let infoMock: jest.SpiedFunction<typeof core.info>
 
 describe('HandleStaleDiscussions', () => {
   let processor: HandleStaleDiscussions
@@ -115,17 +115,17 @@ describe('HandleStaleDiscussions', () => {
       }
     ]
 
-    debugMock = jest.spyOn(core, 'debug').mockImplementation(() => {})
+    infoMock = jest.spyOn(core, 'info').mockImplementation(() => {})
 
     const result = await processor.process({
       discussions,
       owner: 'owner',
       repo: 'repo'
     })
-    expect(debugMock).toHaveBeenCalledTimes(1)
+    expect(infoMock).toHaveBeenCalledTimes(1)
     expect(result.success).toBe(true)
     expect(result.debug).toBe(true)
-    expect(debugMock).toHaveBeenCalledWith(
+    expect(infoMock).toHaveBeenCalledWith(
       'Adding comment and closing discussion with id #1'
     )
   })

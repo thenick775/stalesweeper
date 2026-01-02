@@ -1,7 +1,7 @@
 import { DiscussionFetcher } from '../../src/processors/discussion-processor'
 import * as core from '@actions/core'
 
-let debugMock: jest.SpiedFunction<typeof core.debug>
+let infoMock: jest.SpiedFunction<typeof core.info>
 
 describe('DiscussionFetcher', () => {
   let fetcher: DiscussionFetcher
@@ -100,7 +100,7 @@ describe('DiscussionFetcher', () => {
     fetcher.props.debug = true
     fetcher.props.verbose = true
 
-    debugMock = jest.spyOn(core, 'debug').mockImplementation()
+    infoMock = jest.spyOn(core, 'info').mockImplementation()
 
     fetcher.executeQuery = jest.fn().mockResolvedValue({
       data: {
@@ -118,12 +118,12 @@ describe('DiscussionFetcher', () => {
     })
 
     const result = await fetcher.process({ owner: 'owner', repo: 'repo' })
-    debugMock = jest.spyOn(core, 'debug').mockImplementation()
+    infoMock = jest.spyOn(core, 'info').mockImplementation()
     expect(result.success).toBe(true)
     expect(result.debug).toBe(true)
     expect(result.result).toHaveLength(0)
     expect(result.error).toBeUndefined()
-    expect(debugMock).toHaveBeenCalledWith(
+    expect(infoMock).toHaveBeenCalledWith(
       'Fetching discussions page for owner/repo, with cursor null'
     )
   })

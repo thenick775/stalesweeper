@@ -2,7 +2,7 @@ import * as core from '@actions/core'
 import { StaleDiscussionsValidator } from '../../src/processors/stale-processor'
 import { DiscussionNode } from '../../src/interfaces/graphql-outputs'
 
-let debugMock: jest.SpiedFunction<typeof core.debug>
+let infoMock: jest.SpiedFunction<typeof core.info>
 
 describe('StaleDiscussionsValidator', () => {
   let validator: StaleDiscussionsValidator
@@ -132,15 +132,15 @@ describe('StaleDiscussionsValidator', () => {
   it('should handle debug and verbose mode correctly', async () => {
     validator.props.debug = true
     validator.props.verbose = true
-    debugMock = jest.spyOn(core, 'debug').mockImplementation()
+    infoMock = jest.spyOn(core, 'info').mockImplementation()
 
     const result = await validator.process([])
     expect(result.success).toBe(true)
     expect(result.debug).toBe(true)
     expect(result.result).toHaveLength(0)
     expect(result.error).toBeUndefined()
-    expect(debugMock).toHaveBeenCalledTimes(1)
-    expect(debugMock).toHaveBeenCalledWith(
+    expect(infoMock).toHaveBeenCalledTimes(1)
+    expect(infoMock).toHaveBeenCalledWith(
       'Comparing discussion dates with Sun, 01 Jan 2023 00:00:00 GMT, to determine stale state'
     )
   })
