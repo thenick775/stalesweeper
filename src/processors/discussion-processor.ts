@@ -31,10 +31,6 @@ export class DiscussionFetcher
         )
       }
 
-      if (this.props.debug) {
-        break
-      }
-
       const response: WrappedQueryResponse<DiscussionsQueryResponse> =
         await this.executeQuery(
           buildFetchAllDiscussionsQuery(input.owner, input.repo, cursor)

@@ -121,7 +121,7 @@ describe('DiscussionFetcher', () => {
     infoMock = jest.spyOn(core, 'info').mockImplementation()
     expect(result.success).toBe(true)
     expect(result.debug).toBe(true)
-    expect(result.result).toHaveLength(0)
+    expect(result.result).toHaveLength(2)
     expect(result.error).toBeUndefined()
     expect(infoMock).toHaveBeenCalledWith(
       'Fetching discussions page for owner/repo, with cursor null'

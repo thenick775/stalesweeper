@@ -17,14 +17,6 @@ export class GitHubRateLimitFetcher
       info('Fetching rate limit')
     }
 
-    if (this.props.debug) {
-      return {
-        result: { data: { rateLimit: { limit: -1, remaining: -1 } } },
-        success: true,
-        debug: true
-      }
-    }
-
     const response: WrappedQueryResponse<GitHubRateLimit> =
       await this.executeQuery(buildFetchRateLimitQuery())
     if (response.error) {

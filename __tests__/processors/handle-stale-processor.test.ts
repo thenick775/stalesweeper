@@ -122,7 +122,7 @@ describe('HandleStaleDiscussions', () => {
       owner: 'owner',
       repo: 'repo'
     })
-    expect(infoMock).toHaveBeenCalledTimes(1)
+    expect(infoMock).toHaveBeenCalledTimes(2)
     expect(result.success).toBe(true)
     expect(result.debug).toBe(true)
     expect(infoMock).toHaveBeenCalledWith(

@@ -31051,9 +31051,6 @@ class DiscussionFetcher extends graphql_processor_1.GraphqlProcessor {
             if (this.props.verbose) {
                 (0, core_1.info)(`Fetching discussions page for ${input.owner}/${input.repo}, with cursor ${cursor}`);
             }
-            if (this.props.debug) {
-                break;
-            }
             const response = await this.executeQuery((0, discussion_queries_1.buildFetchAllDiscussionsQuery)(input.owner, input.repo, cursor));
             if (response.error) {
                 return {
@@ -31165,6 +31162,9 @@ class HandleStaleDiscussions extends graphql_processor_1.GraphqlProcessor {
                 (0, core_1.info)(`Adding comment and closing discussion with id #${discussion.number}`);
             }
             if (this.props.debug) {
+                if (this.props.verbose) {
+                    (0, core_1.info)(`[dry-run] Would comment and close discussion #${discussion.number}`);
+                }
                 continue;
             }
             if (this.props.message && this.props.message !== '') {
@@ -31289,13 +31289,6 @@ class GitHubRateLimitFetcher extends graphql_processor_1.GraphqlProcessor {
         if (this.props.verbose) {
             (0, core_1.info)('Fetching rate limit');
         }
-        if (this.props.debug) {
-            return {
-                result: { data: { rateLimit: { limit: -1, remaining: -1 } } },
-                success: true,
-                debug: true
-            };
-        }
         const response = await this.executeQuery((0, ratelimit_queries_1.buildFetchRateLimitQuery)());
         if (response.error) {
             return {
@@ -31379,7 +31372,7 @@ function buildFetchAllDiscussionsQuery(owner, repo, cursor) {
     return `
 query {
   repository(owner: "${owner}", name: "${repo}") {
-    discussions(first: 20, states: OPEN, after: ${cursor}) {
+    discussions(first: 20, states: OPEN, after: ${cursor ? `"${cursor}"` : 'null'}) {
       nodes {
         id
         number
