@@ -33,6 +33,11 @@ export class HandleStaleDiscussions
       }
 
       if (this.props.debug) {
+        if (this.props.verbose) {
+          info(
+            `[dry-run] Would comment and close discussion #${discussion.number}`
+          )
+        }
         continue
       }
 
