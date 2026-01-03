@@ -11,6 +11,7 @@ import {
   buildDiscussionAddCommentQuery
 } from '../query/discussion-queries'
 import { info } from '@actions/core'
+import { withItemLogGroup } from '../utils/ansi-comments'
 
 export interface HandleStaleDiscussionsProps {
   discussions: DiscussionNode[]
@@ -26,46 +27,59 @@ export class HandleStaleDiscussions
     input: HandleStaleDiscussionsProps
   ): Promise<SimulationResult<DiscussionNode[]>> {
     for (const discussion of input.discussions) {
-      if (this.props.verbose) {
-        info(
-          `Adding comment and closing discussion with id #${discussion.number}`
-        )
-      }
-
-      if (this.props.debug) {
+      const act = async (): Promise<void> => {
         if (this.props.verbose) {
           info(
-            `[dry-run] Would comment and close discussion #${discussion.number}`
+            `  [#${discussion.number}] Adding comment and closing discussion #${discussion.number}`
           )
         }
-        continue
-      }
 
-      if (this.props.message && this.props.message !== '') {
-        const commentResponse: WrappedQueryResponse<DiscussionsQueryResponse> =
-          await this.executeQuery(
-            buildDiscussionAddCommentQuery(discussion.id, this.props.message)
-          )
-        if (commentResponse.error) {
-          return {
-            result: [],
-            success: false,
-            debug: this.props.debug,
-            error: commentResponse.error
+        if (this.props.debug) {
+          if (this.props.verbose) {
+            info(
+              `  [#${discussion.number}] └── [dry-run] Would comment and close this discussion`
+            )
           }
+          return
+        }
+
+        if (this.props.message && this.props.message !== '') {
+          const commentResponse: WrappedQueryResponse<DiscussionsQueryResponse> =
+            await this.executeQuery(
+              buildDiscussionAddCommentQuery(discussion.id, this.props.message)
+            )
+          if (commentResponse.error) {
+            throw commentResponse.error
+          }
+        } else if (this.props.verbose) {
+          info(`  [#${discussion.number}] └── Skipping comment (no message)`)
+        }
+
+        const closeResponse: WrappedQueryResponse<DiscussionsQueryResponse> =
+          await this.executeQuery(
+            buildCloseDiscussionQuery(discussion.id, this.props.closeReason)
+          )
+        if (closeResponse.error) {
+          throw closeResponse.error
         }
       }
 
-      const closeResponse: WrappedQueryResponse<DiscussionsQueryResponse> =
-        await this.executeQuery(
-          buildCloseDiscussionQuery(discussion.id, this.props.closeReason)
-        )
-      if (closeResponse.error) {
+      try {
+        if (this.props.verbose) {
+          await withItemLogGroup(
+            discussion.number,
+            `Discussion #${discussion.number}`,
+            act
+          )
+        } else {
+          await act()
+        }
+      } catch (err) {
         return {
           result: [],
           success: false,
           debug: this.props.debug,
-          error: closeResponse.error
+          error: err as Error
         }
       }
     }

@@ -30957,6 +30957,7 @@ const input_processor_1 = __nccwpck_require__(3012);
 const stale_processor_1 = __nccwpck_require__(397);
 const handle_stale_processor_1 = __nccwpck_require__(3326);
 const ratelimit_processor_1 = __nccwpck_require__(209);
+const ansi_comments_1 = __nccwpck_require__(7305);
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
@@ -30968,64 +30969,96 @@ async function run() {
         (0, core_1.setFailed)(props.error);
         return;
     }
-    if (props.debug) {
-        (0, core_1.debug)(`Input props: ${JSON.stringify(props.result)}`);
-    }
     if (!props.result) {
         (0, core_1.setFailed)('Invalid input properties');
         return;
     }
     const inputProps = props.result;
+    const repo = `${github_1.context.repo.owner}/${github_1.context.repo.repo}`;
+    // Keep details collapsible (like actions/stale "More details")
+    if (inputProps.verbose) {
+        (0, core_1.startGroup)('Inputs');
+        (0, core_1.info)(`Repository: ${repo}`);
+        (0, core_1.info)(`Dry run: ${inputProps.debug}`);
+        (0, core_1.info)(`Threshold: ${inputProps.threshold.toUTCString()}`);
+        if (inputProps.category)
+            (0, core_1.info)(`Category: ${inputProps.category}`);
+        (0, core_1.info)(`Close unanswered: ${inputProps.closeUnanswered}`);
+        (0, core_1.info)(`Close reason: ${inputProps.closeReason}`);
+        (0, core_1.endGroup)();
+    }
     const rateLimit = new ratelimit_processor_1.GitHubRateLimitFetcher(inputProps);
     const beforeRateLimit = await rateLimit.process();
     if (beforeRateLimit.error) {
         (0, core_1.setFailed)(beforeRateLimit.error);
         return;
     }
-    if (inputProps.verbose) {
-        (0, core_1.info)(`Rate limit before execution: ${JSON.stringify(beforeRateLimit.result)}`);
-    }
     const fetcher = new discussion_processor_1.DiscussionFetcher(inputProps);
+    if (inputProps.verbose)
+        (0, core_1.startGroup)('Fetching discussions');
     const discussions = await fetcher.process({
         owner: github_1.context.repo.owner,
         repo: github_1.context.repo.repo
     });
+    if (inputProps.verbose)
+        (0, core_1.endGroup)();
     if (discussions.error) {
         (0, core_1.setFailed)(discussions.error);
         return;
     }
-    if (inputProps.verbose) {
-        (0, core_1.info)(`Fetched discussions: ${JSON.stringify(discussions.result)}`);
-    }
     const staleValidator = new stale_processor_1.StaleDiscussionsValidator(inputProps);
+    if (inputProps.verbose)
+        (0, core_1.startGroup)('Determining stale discussions');
     const staleDiscussions = await staleValidator.process(discussions.result);
+    if (inputProps.verbose)
+        (0, core_1.endGroup)();
     if (staleDiscussions.error) {
         (0, core_1.setFailed)(staleDiscussions.error);
         return;
     }
-    if (inputProps.verbose) {
-        (0, core_1.info)(`Stale discussions: ${JSON.stringify(staleDiscussions.result)}`);
-    }
     const staleHandler = new handle_stale_processor_1.HandleStaleDiscussions(inputProps);
+    if (inputProps.verbose)
+        (0, core_1.startGroup)('Handling stale discussions');
     const handledStaleDiscussions = await staleHandler.process({
         discussions: staleDiscussions.result,
         owner: github_1.context.repo.owner,
         repo: github_1.context.repo.repo
     });
+    if (inputProps.verbose)
+        (0, core_1.endGroup)();
     if (handledStaleDiscussions.error) {
         (0, core_1.setFailed)(handledStaleDiscussions.error);
         return;
-    }
-    if (inputProps.verbose) {
-        (0, core_1.info)(`Processed stale discussions: ${JSON.stringify(handledStaleDiscussions.result)}`);
     }
     const afterRateLimit = await rateLimit.process();
     if (afterRateLimit.error) {
         (0, core_1.setFailed)(afterRateLimit.error);
         return;
     }
-    if (inputProps.verbose) {
-        (0, core_1.info)(`Rate limit after execution: ${JSON.stringify(afterRateLimit.result)}`);
+    const fetchedCount = discussions.result.length;
+    const processedCount = handledStaleDiscussions.result.length;
+    const operationsPerformed = inputProps.debug ? 0 : processedCount;
+    if (processedCount === 0) {
+        (0, ansi_comments_1.writeNoMore)('discussions');
+    }
+    else if (inputProps.debug) {
+        (0, core_1.info)('Dry run enabled: no comments/closures were performed.');
+    }
+    (0, ansi_comments_1.writeStatisticsHeader)();
+    (0, ansi_comments_1.writeStatisticLine)('Processed discussions', processedCount);
+    (0, ansi_comments_1.writeStatisticLine)('Fetched items', fetchedCount);
+    (0, ansi_comments_1.writeStatisticLine)('Operations performed', operationsPerformed);
+    const before = beforeRateLimit.result.data.rateLimit;
+    const after = afterRateLimit.result.data.rateLimit;
+    if (before.limit >= 0 && before.remaining >= 0) {
+        const used = before.limit - before.remaining;
+        (0, core_1.info)(`Github API rate used: ${used}`);
+    }
+    if (after.remaining >= 0) {
+        const reset = after.resetAt
+            ? `; reset at: ${new Date(after.resetAt).toString()}`
+            : '';
+        (0, core_1.info)(`Github API rate remaining: ${after.remaining}${reset}`);
     }
     (0, core_1.setOutput)('stale-discussions', handledStaleDiscussions.result);
 }
@@ -31155,36 +31188,48 @@ exports.HandleStaleDiscussions = void 0;
 const graphql_processor_1 = __nccwpck_require__(1993);
 const discussion_queries_1 = __nccwpck_require__(3467);
 const core_1 = __nccwpck_require__(7484);
+const ansi_comments_1 = __nccwpck_require__(7305);
 class HandleStaleDiscussions extends graphql_processor_1.GraphqlProcessor {
     async process(input) {
         for (const discussion of input.discussions) {
-            if (this.props.verbose) {
-                (0, core_1.info)(`Adding comment and closing discussion with id #${discussion.number}`);
-            }
-            if (this.props.debug) {
+            const act = async () => {
                 if (this.props.verbose) {
-                    (0, core_1.info)(`[dry-run] Would comment and close discussion #${discussion.number}`);
+                    (0, core_1.info)(`  [#${discussion.number}] Adding comment and closing discussion #${discussion.number}`);
                 }
-                continue;
-            }
-            if (this.props.message && this.props.message !== '') {
-                const commentResponse = await this.executeQuery((0, discussion_queries_1.buildDiscussionAddCommentQuery)(discussion.id, this.props.message));
-                if (commentResponse.error) {
-                    return {
-                        result: [],
-                        success: false,
-                        debug: this.props.debug,
-                        error: commentResponse.error
-                    };
+                if (this.props.debug) {
+                    if (this.props.verbose) {
+                        (0, core_1.info)(`  [#${discussion.number}] └── [dry-run] Would comment and close this discussion`);
+                    }
+                    return;
+                }
+                if (this.props.message && this.props.message !== '') {
+                    const commentResponse = await this.executeQuery((0, discussion_queries_1.buildDiscussionAddCommentQuery)(discussion.id, this.props.message));
+                    if (commentResponse.error) {
+                        throw commentResponse.error;
+                    }
+                }
+                else if (this.props.verbose) {
+                    (0, core_1.info)(`  [#${discussion.number}] └── Skipping comment (no message)`);
+                }
+                const closeResponse = await this.executeQuery((0, discussion_queries_1.buildCloseDiscussionQuery)(discussion.id, this.props.closeReason));
+                if (closeResponse.error) {
+                    throw closeResponse.error;
+                }
+            };
+            try {
+                if (this.props.verbose) {
+                    await (0, ansi_comments_1.withItemLogGroup)(discussion.number, `Discussion #${discussion.number}`, act);
+                }
+                else {
+                    await act();
                 }
             }
-            const closeResponse = await this.executeQuery((0, discussion_queries_1.buildCloseDiscussionQuery)(discussion.id, this.props.closeReason));
-            if (closeResponse.error) {
+            catch (err) {
                 return {
                     result: [],
                     success: false,
                     debug: this.props.debug,
-                    error: closeResponse.error
+                    error: err
                 };
             }
         }
@@ -31328,25 +31373,52 @@ exports.StaleDiscussionsValidator = void 0;
 const graphql_processor_1 = __nccwpck_require__(1993);
 const time_1 = __nccwpck_require__(2144);
 const core_1 = __nccwpck_require__(7484);
+const ansi_comments_1 = __nccwpck_require__(7305);
 class StaleDiscussionsValidator extends graphql_processor_1.GraphqlProcessor {
-    // eslint-disable-next-line @typescript-eslint/require-await -- see Processor type
     async process(discussions) {
         if (this.props.verbose) {
             (0, core_1.info)(`Comparing discussion dates with ${this.props.threshold.toUTCString()}, to determine stale state`);
         }
-        const staleDiscussions = discussions.filter(discussion => {
-            if (discussion.category.isAnswerable &&
-                !this.props.closeUnanswered &&
-                !discussion.isAnswered) {
-                return false;
+        const staleDiscussions = [];
+        for (const discussion of discussions) {
+            const evaluate = () => {
+                if (this.props.verbose) {
+                    (0, core_1.info)(`  [#${discussion.number}] Found this discussion last updated at: ${discussion.updatedAt}`);
+                }
+                if (discussion.category.isAnswerable &&
+                    !this.props.closeUnanswered &&
+                    !discussion.isAnswered) {
+                    if (this.props.verbose) {
+                        (0, core_1.info)(`  [#${discussion.number}] Skipping because it is unanswered and close-unanswered is false`);
+                    }
+                    return;
+                }
+                if (this.props.category &&
+                    discussion.category.name !== this.props.category) {
+                    if (this.props.verbose) {
+                        (0, core_1.info)(`  [#${discussion.number}] Skipping because it is in category "${discussion.category.name}" (expected "${this.props.category}")`);
+                    }
+                    return;
+                }
+                const discussionUpdatedAt = new Date(discussion.updatedAt);
+                if (!(0, time_1.isBefore)(discussionUpdatedAt, this.props.threshold)) {
+                    if (this.props.verbose) {
+                        (0, core_1.info)(`  [#${discussion.number}] └── Not stale yet`);
+                    }
+                    return;
+                }
+                if (this.props.verbose) {
+                    (0, core_1.info)(`  [#${discussion.number}] └── Marked as stale`);
+                }
+                staleDiscussions.push(discussion);
+            };
+            if (this.props.verbose) {
+                await (0, ansi_comments_1.withItemLogGroup)(discussion.number, `Discussion #${discussion.number}`, evaluate);
             }
-            if (this.props.category &&
-                discussion.category.name !== this.props.category) {
-                return false;
+            else {
+                evaluate();
             }
-            const discussionUpdatedAt = new Date(discussion.updatedAt);
-            return (0, time_1.isBefore)(discussionUpdatedAt, this.props.threshold);
-        });
+        }
         return {
             result: staleDiscussions,
             success: true,
@@ -31424,9 +31496,56 @@ query {
   rateLimit {
     limit
     remaining
+    resetAt
   }
 }`;
 }
+
+
+/***/ }),
+
+/***/ 7305:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.writeStatisticLine = exports.writeStatisticsHeader = exports.writeNoMore = exports.withItemLogGroup = exports.withLogGroup = void 0;
+const core_1 = __nccwpck_require__(7484);
+const ANSI = {
+    reset: '\x1b[39m',
+    white: '\x1b[97m',
+    green: '\x1b[32m',
+    cyan: '\x1b[36m',
+    yellow: '\x1b[33m',
+    boldOn: '\x1b[1m',
+    boldOff: '\x1b[22m'
+};
+const wrap = (s) => `${ANSI.white}${s}${ANSI.reset}${ANSI.reset}`;
+const withLogGroup = async (title, fn) => {
+    (0, core_1.startGroup)(title);
+    try {
+        await fn();
+    }
+    finally {
+        (0, core_1.endGroup)();
+    }
+};
+exports.withLogGroup = withLogGroup;
+const withItemLogGroup = async (number, title, fn) => (0, exports.withLogGroup)(`[#${number}] ${title}`, fn);
+exports.withItemLogGroup = withItemLogGroup;
+const writeNoMore = (kind) => {
+    (0, core_1.info)(wrap(`${ANSI.green}No more ${kind} found to process. Exiting...${ANSI.reset}`));
+};
+exports.writeNoMore = writeNoMore;
+const writeStatisticsHeader = () => {
+    (0, core_1.info)(`${ANSI.white}${ANSI.yellow}${ANSI.boldOn}Statistics:${ANSI.boldOff}${ANSI.reset}${ANSI.reset}`);
+};
+exports.writeStatisticsHeader = writeStatisticsHeader;
+const writeStatisticLine = (label, value) => {
+    (0, core_1.info)(wrap(`${label}: ${ANSI.cyan}${value}${ANSI.reset}`));
+};
+exports.writeStatisticLine = writeStatisticLine;
 
 
 /***/ }),
