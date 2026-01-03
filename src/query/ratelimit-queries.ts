@@ -4,6 +4,7 @@ query {
   rateLimit {
     limit
     remaining
+    resetAt
   }
 }`
 }

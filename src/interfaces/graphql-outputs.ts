@@ -35,6 +35,7 @@ export interface GitHubRateLimit {
     rateLimit: {
       limit: number
       remaining: number
+      resetAt?: string
     }
   }
 }
