@@ -10,8 +10,10 @@ import {
   buildCloseDiscussionQuery,
   buildDiscussionAddCommentQuery
 } from '../query/discussion-queries'
-import { info } from '@actions/core'
-import { withItemLogGroup } from '../utils/ansi-comments'
+import {
+  withDiscussionLogGroup,
+  writeWithDiscussionNumber
+} from '../utils/ansi-comments'
 
 export interface HandleStaleDiscussionsProps {
   discussions: DiscussionNode[]
@@ -29,15 +31,17 @@ export class HandleStaleDiscussions
     for (const discussion of input.discussions) {
       const act = async (): Promise<void> => {
         if (this.props.verbose) {
-          info(
-            `  [#${discussion.number}] Adding comment and closing discussion #${discussion.number}`
+          writeWithDiscussionNumber(
+            discussion.number,
+            `Adding comment and closing discussion #${discussion.number}`
           )
         }
 
         if (this.props.debug) {
           if (this.props.verbose) {
-            info(
-              `  [#${discussion.number}] └── [dry-run] Would comment and close this discussion`
+            writeWithDiscussionNumber(
+              discussion.number,
+              `└── [dry-run] Would comment and close this discussion`
             )
           }
           return
@@ -52,7 +56,10 @@ export class HandleStaleDiscussions
             throw commentResponse.error
           }
         } else if (this.props.verbose) {
-          info(`  [#${discussion.number}] └── Skipping comment (no message)`)
+          writeWithDiscussionNumber(
+            discussion.number,
+            `└── Skipping comment (no message)`
+          )
         }
 
         const closeResponse: WrappedQueryResponse<DiscussionsQueryResponse> =
@@ -66,7 +73,7 @@ export class HandleStaleDiscussions
 
       try {
         if (this.props.verbose) {
-          await withItemLogGroup(
+          await withDiscussionLogGroup(
             discussion.number,
             `Discussion #${discussion.number}`,
             act

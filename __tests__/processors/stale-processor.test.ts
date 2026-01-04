@@ -141,7 +141,7 @@ describe('StaleDiscussionsValidator', () => {
     expect(result.error).toBeUndefined()
     expect(infoMock).toHaveBeenCalledTimes(1)
     expect(infoMock).toHaveBeenCalledWith(
-      'Comparing discussion dates with Sun, 01 Jan 2023 00:00:00 GMT, to determine stale state'
+      'Stale if last updated before: Sun, 01 Jan 2023 00:00:00 GMT'
     )
   })
 })

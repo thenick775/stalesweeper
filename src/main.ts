@@ -30,20 +30,6 @@ export async function run(): Promise<void> {
   }
 
   const inputProps = props.result
-  const repo = `${context.repo.owner}/${context.repo.repo}`
-
-  // Keep details collapsible (like actions/stale "More details")
-  if (inputProps.verbose) {
-    startGroup('Inputs')
-    info(`Repository: ${repo}`)
-    info(`Dry run: ${inputProps.debug}`)
-    info(`Threshold: ${inputProps.threshold.toUTCString()}`)
-    if (inputProps.category) info(`Category: ${inputProps.category}`)
-    info(`Close unanswered: ${inputProps.closeUnanswered}`)
-    info(`Close reason: ${inputProps.closeReason}`)
-    endGroup()
-  }
-
   const rateLimit = new GitHubRateLimitFetcher(inputProps)
 
   const beforeRateLimit = await rateLimit.process()
@@ -113,8 +99,8 @@ export async function run(): Promise<void> {
 
   const before = beforeRateLimit.result.rateLimit
   const after = afterRateLimit.result.rateLimit
-  if (before.limit >= 0 && before.remaining >= 0) {
-    const used = before.limit - before.remaining
+  if (before.remaining >= 0 && after.remaining >= 0) {
+    const used = before.remaining - after.remaining
     info(`Github API rate used: ${used}`)
   }
   if (after.remaining >= 0) {

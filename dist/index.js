@@ -30974,19 +30974,6 @@ async function run() {
         return;
     }
     const inputProps = props.result;
-    const repo = `${github_1.context.repo.owner}/${github_1.context.repo.repo}`;
-    // Keep details collapsible (like actions/stale "More details")
-    if (inputProps.verbose) {
-        (0, core_1.startGroup)('Inputs');
-        (0, core_1.info)(`Repository: ${repo}`);
-        (0, core_1.info)(`Dry run: ${inputProps.debug}`);
-        (0, core_1.info)(`Threshold: ${inputProps.threshold.toUTCString()}`);
-        if (inputProps.category)
-            (0, core_1.info)(`Category: ${inputProps.category}`);
-        (0, core_1.info)(`Close unanswered: ${inputProps.closeUnanswered}`);
-        (0, core_1.info)(`Close reason: ${inputProps.closeReason}`);
-        (0, core_1.endGroup)();
-    }
     const rateLimit = new ratelimit_processor_1.GitHubRateLimitFetcher(inputProps);
     const beforeRateLimit = await rateLimit.process();
     if (beforeRateLimit.error) {
@@ -31050,8 +31037,8 @@ async function run() {
     (0, ansi_comments_1.writeStatisticLine)('Operations performed', operationsPerformed);
     const before = beforeRateLimit.result.rateLimit;
     const after = afterRateLimit.result.rateLimit;
-    if (before.limit >= 0 && before.remaining >= 0) {
-        const used = before.limit - before.remaining;
+    if (before.remaining >= 0 && after.remaining >= 0) {
+        const used = before.remaining - after.remaining;
         (0, core_1.info)(`Github API rate used: ${used}`);
     }
     if (after.remaining >= 0) {
@@ -31187,18 +31174,17 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.HandleStaleDiscussions = void 0;
 const graphql_processor_1 = __nccwpck_require__(1993);
 const discussion_queries_1 = __nccwpck_require__(3467);
-const core_1 = __nccwpck_require__(7484);
 const ansi_comments_1 = __nccwpck_require__(7305);
 class HandleStaleDiscussions extends graphql_processor_1.GraphqlProcessor {
     async process(input) {
         for (const discussion of input.discussions) {
             const act = async () => {
                 if (this.props.verbose) {
-                    (0, core_1.info)(`  [#${discussion.number}] Adding comment and closing discussion #${discussion.number}`);
+                    (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `Adding comment and closing discussion #${discussion.number}`);
                 }
                 if (this.props.debug) {
                     if (this.props.verbose) {
-                        (0, core_1.info)(`  [#${discussion.number}] └── [dry-run] Would comment and close this discussion`);
+                        (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `└── [dry-run] Would comment and close this discussion`);
                     }
                     return;
                 }
@@ -31209,7 +31195,7 @@ class HandleStaleDiscussions extends graphql_processor_1.GraphqlProcessor {
                     }
                 }
                 else if (this.props.verbose) {
-                    (0, core_1.info)(`  [#${discussion.number}] └── Skipping comment (no message)`);
+                    (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `└── Skipping comment (no message)`);
                 }
                 const closeResponse = await this.executeQuery((0, discussion_queries_1.buildCloseDiscussionQuery)(discussion.id, this.props.closeReason));
                 if (closeResponse.error) {
@@ -31218,7 +31204,7 @@ class HandleStaleDiscussions extends graphql_processor_1.GraphqlProcessor {
             };
             try {
                 if (this.props.verbose) {
-                    await (0, ansi_comments_1.withItemLogGroup)(discussion.number, `Discussion #${discussion.number}`, act);
+                    await (0, ansi_comments_1.withDiscussionLogGroup)(discussion.number, `Discussion #${discussion.number}`, act);
                 }
                 else {
                     await act();
@@ -31384,33 +31370,34 @@ const ansi_comments_1 = __nccwpck_require__(7305);
 class StaleDiscussionsValidator extends graphql_processor_1.GraphqlProcessor {
     async process(discussions) {
         if (this.props.verbose) {
-            (0, core_1.info)(`Comparing discussion dates with ${this.props.threshold.toUTCString()}, to determine stale state`);
+            (0, core_1.info)(`Stale if last updated before: ${(0, ansi_comments_1.colorDate)(this.props.threshold.toUTCString())}`);
         }
         const staleDiscussions = [];
         for (const discussion of discussions) {
             const evaluate = () => {
                 if (this.props.verbose) {
-                    (0, core_1.info)(`  [#${discussion.number}] Found this discussion last updated at: ${discussion.updatedAt}`);
+                    (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `Found this discussion last updated at: ${(0, ansi_comments_1.colorDate)(discussion.updatedAt)}`);
                 }
                 if (discussion.category.isAnswerable &&
                     !this.props.closeUnanswered &&
                     !discussion.isAnswered) {
                     if (this.props.verbose) {
-                        (0, core_1.info)(`  [#${discussion.number}] Skipping because it is unanswered and close-unanswered is false`);
+                        (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `Skipping because it is unanswered and close-unanswered is false`);
                     }
                     return;
                 }
                 if (this.props.category &&
                     discussion.category.name !== this.props.category) {
                     if (this.props.verbose) {
-                        (0, core_1.info)(`  [#${discussion.number}] Skipping because it is in category "${discussion.category.name}" (expected "${this.props.category}")`);
+                        (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `Skipping because it is in category "${discussion.category.name}" (expected "${this.props.category}")`);
                     }
                     return;
                 }
                 const discussionUpdatedAt = new Date(discussion.updatedAt);
                 if (!(0, time_1.isBefore)(discussionUpdatedAt, this.props.threshold)) {
                     if (this.props.verbose) {
-                        (0, core_1.info)(`  [#${discussion.number}] └── Not stale yet`);
+                        const daysRemaining = (0, time_1.daysRemainingUntilStale)(discussionUpdatedAt, this.props.threshold);
+                        (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `└── Not stale yet, days before stale: ${(0, ansi_comments_1.colorNumber)(daysRemaining)}`);
                     }
                     return;
                 }
@@ -31418,17 +31405,17 @@ class StaleDiscussionsValidator extends graphql_processor_1.GraphqlProcessor {
                 const exemptLabels = this.props.exemptLabels?.filter(label => discussionLabels?.includes(label));
                 if (exemptLabels?.length) {
                     if (this.props.verbose) {
-                        (0, core_1.info)(`  [#${discussion.number}] Skipping this discussion because it contains exempt label(s): [${exemptLabels.map(el => `'${el}'`).join(', ')}], see exempt-labels for more details`);
+                        (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `Skipping this discussion because it contains exempt label(s): [${exemptLabels.map(el => `'${el}'`).join(', ')}], see exempt-labels for more details`);
                     }
                     return;
                 }
                 if (this.props.verbose) {
-                    (0, core_1.info)(`  [#${discussion.number}] └── Marked as stale`);
+                    (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `└── Marked as stale`);
                 }
                 staleDiscussions.push(discussion);
             };
             if (this.props.verbose) {
-                await (0, ansi_comments_1.withItemLogGroup)(discussion.number, `Discussion #${discussion.number}`, evaluate);
+                await (0, ansi_comments_1.withDiscussionLogGroup)(discussion.number, `Discussion #${discussion.number}`, evaluate);
             }
             else {
                 evaluate();
@@ -31525,23 +31512,18 @@ query {
 /***/ }),
 
 /***/ 7305:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
 
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.writeStatisticLine = exports.writeStatisticsHeader = exports.writeNoMore = exports.withItemLogGroup = exports.withLogGroup = void 0;
-const core_1 = __nccwpck_require__(7484);
-const ANSI = {
-    reset: '\x1b[0m',
-    whiteBright: '\x1b[97m',
-    yellowBright: '\x1b[93m',
-    cyan: '\x1b[36m',
-    green: '\x1b[32m',
-    red: '\x1b[31m',
-    bold: '\x1b[1m'
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-const format = (style) => (message) => `${ANSI[style]}${message}${ANSI.reset}`;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.colorNumber = exports.colorDate = exports.writeStatisticLine = exports.writeStatisticsHeader = exports.writeNoMore = exports.writeWithDiscussionNumber = exports.withDiscussionLogGroup = exports.withLogGroup = void 0;
+const core_1 = __nccwpck_require__(7484);
+const ansi_styles_1 = __importDefault(__nccwpck_require__(7865));
+const format = (style) => (message) => `${ansi_styles_1.default[style].open}${message}${ansi_styles_1.default[style].close}`;
 const whiteBright = format('whiteBright');
 const yellowBright = format('yellowBright');
 const cyan = format('cyan');
@@ -31558,8 +31540,12 @@ const withLogGroup = async (title, fn) => {
     }
 };
 exports.withLogGroup = withLogGroup;
-const withItemLogGroup = async (number, title, fn) => (0, exports.withLogGroup)(`${red(`[#${number}]`)} ${title}`, fn);
-exports.withItemLogGroup = withItemLogGroup;
+const withDiscussionLogGroup = async (number, title, fn) => (0, exports.withLogGroup)(`${red(`[#${number}]`)} ${title}`, fn);
+exports.withDiscussionLogGroup = withDiscussionLogGroup;
+const writeWithDiscussionNumber = (number, message) => {
+    (0, core_1.info)(whiteBright(red(`${red(`[#${number}]`)} ${message}`)));
+};
+exports.writeWithDiscussionNumber = writeWithDiscussionNumber;
 const writeNoMore = (kind) => {
     (0, core_1.info)(whiteBright(green(`No more ${kind} found to process. Exiting...`)));
 };
@@ -31572,6 +31558,10 @@ const writeStatisticLine = (label, value) => {
     (0, core_1.info)(whiteBright(`${label}: ${cyan(value)}`));
 };
 exports.writeStatisticLine = writeStatisticLine;
+const colorDate = (dateString) => cyan(dateString);
+exports.colorDate = colorDate;
+const colorNumber = (number) => cyan(number);
+exports.colorNumber = colorNumber;
 
 
 /***/ }),
@@ -31583,8 +31573,15 @@ exports.writeStatisticLine = writeStatisticLine;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.isBefore = isBefore;
+exports.daysRemainingUntilStale = daysRemainingUntilStale;
 function isBefore(date1, date2) {
     return date1.getTime() < date2.getTime();
+}
+function daysRemainingUntilStale(updatedAt, threshold, now = new Date()) {
+    const msPerDay = 86_400_000;
+    const staleAfterDays = Math.floor((now.getTime() - threshold.getTime()) / msPerDay);
+    return Math.max(0, staleAfterDays -
+        Math.floor((now.getTime() - updatedAt.getTime()) / msPerDay));
 }
 
 
@@ -33461,6 +33458,245 @@ function parseParams (str) {
 module.exports = parseParams
 
 
+/***/ }),
+
+/***/ 7865:
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __nccwpck_require__) => {
+
+"use strict";
+__nccwpck_require__.r(__webpack_exports__);
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   backgroundColorNames: () => (/* binding */ backgroundColorNames),
+/* harmony export */   colorNames: () => (/* binding */ colorNames),
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__),
+/* harmony export */   foregroundColorNames: () => (/* binding */ foregroundColorNames),
+/* harmony export */   modifierNames: () => (/* binding */ modifierNames)
+/* harmony export */ });
+const ANSI_BACKGROUND_OFFSET = 10;
+
+const wrapAnsi16 = (offset = 0) => code => `\u001B[${code + offset}m`;
+
+const wrapAnsi256 = (offset = 0) => code => `\u001B[${38 + offset};5;${code}m`;
+
+const wrapAnsi16m = (offset = 0) => (red, green, blue) => `\u001B[${38 + offset};2;${red};${green};${blue}m`;
+
+const styles = {
+	modifier: {
+		reset: [0, 0],
+		// 21 isn't widely supported and 22 does the same thing
+		bold: [1, 22],
+		dim: [2, 22],
+		italic: [3, 23],
+		underline: [4, 24],
+		overline: [53, 55],
+		inverse: [7, 27],
+		hidden: [8, 28],
+		strikethrough: [9, 29],
+	},
+	color: {
+		black: [30, 39],
+		red: [31, 39],
+		green: [32, 39],
+		yellow: [33, 39],
+		blue: [34, 39],
+		magenta: [35, 39],
+		cyan: [36, 39],
+		white: [37, 39],
+
+		// Bright color
+		blackBright: [90, 39],
+		gray: [90, 39], // Alias of `blackBright`
+		grey: [90, 39], // Alias of `blackBright`
+		redBright: [91, 39],
+		greenBright: [92, 39],
+		yellowBright: [93, 39],
+		blueBright: [94, 39],
+		magentaBright: [95, 39],
+		cyanBright: [96, 39],
+		whiteBright: [97, 39],
+	},
+	bgColor: {
+		bgBlack: [40, 49],
+		bgRed: [41, 49],
+		bgGreen: [42, 49],
+		bgYellow: [43, 49],
+		bgBlue: [44, 49],
+		bgMagenta: [45, 49],
+		bgCyan: [46, 49],
+		bgWhite: [47, 49],
+
+		// Bright color
+		bgBlackBright: [100, 49],
+		bgGray: [100, 49], // Alias of `bgBlackBright`
+		bgGrey: [100, 49], // Alias of `bgBlackBright`
+		bgRedBright: [101, 49],
+		bgGreenBright: [102, 49],
+		bgYellowBright: [103, 49],
+		bgBlueBright: [104, 49],
+		bgMagentaBright: [105, 49],
+		bgCyanBright: [106, 49],
+		bgWhiteBright: [107, 49],
+	},
+};
+
+const modifierNames = Object.keys(styles.modifier);
+const foregroundColorNames = Object.keys(styles.color);
+const backgroundColorNames = Object.keys(styles.bgColor);
+const colorNames = [...foregroundColorNames, ...backgroundColorNames];
+
+function assembleStyles() {
+	const codes = new Map();
+
+	for (const [groupName, group] of Object.entries(styles)) {
+		for (const [styleName, style] of Object.entries(group)) {
+			styles[styleName] = {
+				open: `\u001B[${style[0]}m`,
+				close: `\u001B[${style[1]}m`,
+			};
+
+			group[styleName] = styles[styleName];
+
+			codes.set(style[0], style[1]);
+		}
+
+		Object.defineProperty(styles, groupName, {
+			value: group,
+			enumerable: false,
+		});
+	}
+
+	Object.defineProperty(styles, 'codes', {
+		value: codes,
+		enumerable: false,
+	});
+
+	styles.color.close = '\u001B[39m';
+	styles.bgColor.close = '\u001B[49m';
+
+	styles.color.ansi = wrapAnsi16();
+	styles.color.ansi256 = wrapAnsi256();
+	styles.color.ansi16m = wrapAnsi16m();
+	styles.bgColor.ansi = wrapAnsi16(ANSI_BACKGROUND_OFFSET);
+	styles.bgColor.ansi256 = wrapAnsi256(ANSI_BACKGROUND_OFFSET);
+	styles.bgColor.ansi16m = wrapAnsi16m(ANSI_BACKGROUND_OFFSET);
+
+	// From https://github.com/Qix-/color-convert/blob/3f0e0d4e92e235796ccb17f6e85c72094a651f49/conversions.js
+	Object.defineProperties(styles, {
+		rgbToAnsi256: {
+			value(red, green, blue) {
+				// We use the extended greyscale palette here, with the exception of
+				// black and white. normal palette only has 4 greyscale shades.
+				if (red === green && green === blue) {
+					if (red < 8) {
+						return 16;
+					}
+
+					if (red > 248) {
+						return 231;
+					}
+
+					return Math.round(((red - 8) / 247) * 24) + 232;
+				}
+
+				return 16
+					+ (36 * Math.round(red / 255 * 5))
+					+ (6 * Math.round(green / 255 * 5))
+					+ Math.round(blue / 255 * 5);
+			},
+			enumerable: false,
+		},
+		hexToRgb: {
+			value(hex) {
+				const matches = /[a-f\d]{6}|[a-f\d]{3}/i.exec(hex.toString(16));
+				if (!matches) {
+					return [0, 0, 0];
+				}
+
+				let [colorString] = matches;
+
+				if (colorString.length === 3) {
+					colorString = [...colorString].map(character => character + character).join('');
+				}
+
+				const integer = Number.parseInt(colorString, 16);
+
+				return [
+					/* eslint-disable no-bitwise */
+					(integer >> 16) & 0xFF,
+					(integer >> 8) & 0xFF,
+					integer & 0xFF,
+					/* eslint-enable no-bitwise */
+				];
+			},
+			enumerable: false,
+		},
+		hexToAnsi256: {
+			value: hex => styles.rgbToAnsi256(...styles.hexToRgb(hex)),
+			enumerable: false,
+		},
+		ansi256ToAnsi: {
+			value(code) {
+				if (code < 8) {
+					return 30 + code;
+				}
+
+				if (code < 16) {
+					return 90 + (code - 8);
+				}
+
+				let red;
+				let green;
+				let blue;
+
+				if (code >= 232) {
+					red = (((code - 232) * 10) + 8) / 255;
+					green = red;
+					blue = red;
+				} else {
+					code -= 16;
+
+					const remainder = code % 36;
+
+					red = Math.floor(code / 36) / 5;
+					green = Math.floor(remainder / 6) / 5;
+					blue = (remainder % 6) / 5;
+				}
+
+				const value = Math.max(red, green, blue) * 2;
+
+				if (value === 0) {
+					return 30;
+				}
+
+				// eslint-disable-next-line no-bitwise
+				let result = 30 + ((Math.round(blue) << 2) | (Math.round(green) << 1) | Math.round(red));
+
+				if (value === 2) {
+					result += 60;
+				}
+
+				return result;
+			},
+			enumerable: false,
+		},
+		rgbToAnsi: {
+			value: (red, green, blue) => styles.ansi256ToAnsi(styles.rgbToAnsi256(red, green, blue)),
+			enumerable: false,
+		},
+		hexToAnsi: {
+			value: hex => styles.ansi256ToAnsi(styles.hexToAnsi256(hex)),
+			enumerable: false,
+		},
+	});
+
+	return styles;
+}
+
+const ansiStyles = assembleStyles();
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (ansiStyles);
+
+
 /***/ })
 
 /******/ 	});
@@ -33496,6 +33732,34 @@ module.exports = parseParams
 /******/ 	}
 /******/ 	
 /************************************************************************/
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	(() => {
+/******/ 		// define getter functions for harmony exports
+/******/ 		__nccwpck_require__.d = (exports, definition) => {
+/******/ 			for(var key in definition) {
+/******/ 				if(__nccwpck_require__.o(definition, key) && !__nccwpck_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	(() => {
+/******/ 		// define __esModule on exports
+/******/ 		__nccwpck_require__.r = (exports) => {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 			}
+/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		};
+/******/ 	})();
+/******/ 	
 /******/ 	/* webpack/runtime/compat */
 /******/ 	
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";

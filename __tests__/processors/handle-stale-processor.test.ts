@@ -126,10 +126,10 @@ describe('HandleStaleDiscussions', () => {
     expect(result.success).toBe(true)
     expect(result.debug).toBe(true)
     expect(infoMock).toHaveBeenCalledWith(
-      '  [#1] Adding comment and closing discussion #1'
+      '[#1] Adding comment and closing discussion #1'
     )
     expect(infoMock).toHaveBeenCalledWith(
-      '  [#1] └── [dry-run] Would comment and close this discussion'
+      '[#1] └── [dry-run] Would comment and close this discussion'
     )
   })
 })

@@ -2,9 +2,14 @@ import { Processor } from '../interfaces/processable'
 import { DiscussionNode } from '../interfaces/graphql-outputs'
 import { GraphqlProcessor } from './graphql-processor'
 import { SimulationResult } from '../interfaces/simulation-result'
-import { isBefore } from '../utils/time'
+import { daysRemainingUntilStale, isBefore } from '../utils/time'
 import { info } from '@actions/core'
-import { withItemLogGroup } from '../utils/ansi-comments'
+import {
+  colorDate,
+  colorNumber,
+  withDiscussionLogGroup,
+  writeWithDiscussionNumber
+} from '../utils/ansi-comments'
 
 export class StaleDiscussionsValidator
   extends GraphqlProcessor
@@ -15,7 +20,7 @@ export class StaleDiscussionsValidator
   ): Promise<SimulationResult<DiscussionNode[]>> {
     if (this.props.verbose) {
       info(
-        `Comparing discussion dates with ${this.props.threshold.toUTCString()}, to determine stale state`
+        `Stale if last updated before: ${colorDate(this.props.threshold.toUTCString())}`
       )
     }
 
@@ -23,8 +28,9 @@ export class StaleDiscussionsValidator
     for (const discussion of discussions) {
       const evaluate = (): void => {
         if (this.props.verbose) {
-          info(
-            `  [#${discussion.number}] Found this discussion last updated at: ${discussion.updatedAt}`
+          writeWithDiscussionNumber(
+            discussion.number,
+            `Found this discussion last updated at: ${colorDate(discussion.updatedAt)}`
           )
         }
 
@@ -34,8 +40,9 @@ export class StaleDiscussionsValidator
           !discussion.isAnswered
         ) {
           if (this.props.verbose) {
-            info(
-              `  [#${discussion.number}] Skipping because it is unanswered and close-unanswered is false`
+            writeWithDiscussionNumber(
+              discussion.number,
+              `Skipping because it is unanswered and close-unanswered is false`
             )
           }
           return
@@ -46,8 +53,9 @@ export class StaleDiscussionsValidator
           discussion.category.name !== this.props.category
         ) {
           if (this.props.verbose) {
-            info(
-              `  [#${discussion.number}] Skipping because it is in category "${discussion.category.name}" (expected "${this.props.category}")`
+            writeWithDiscussionNumber(
+              discussion.number,
+              `Skipping because it is in category "${discussion.category.name}" (expected "${this.props.category}")`
             )
           }
           return
@@ -56,7 +64,14 @@ export class StaleDiscussionsValidator
         const discussionUpdatedAt = new Date(discussion.updatedAt)
         if (!isBefore(discussionUpdatedAt, this.props.threshold)) {
           if (this.props.verbose) {
-            info(`  [#${discussion.number}] └── Not stale yet`)
+            const daysRemaining = daysRemainingUntilStale(
+              discussionUpdatedAt,
+              this.props.threshold
+            )
+            writeWithDiscussionNumber(
+              discussion.number,
+              `└── Not stale yet, days before stale: ${colorNumber(daysRemaining)}`
+            )
           }
           return
         }
@@ -67,21 +82,22 @@ export class StaleDiscussionsValidator
         )
         if (exemptLabels?.length) {
           if (this.props.verbose) {
-            info(
-              `  [#${discussion.number}] Skipping this discussion because it contains exempt label(s): [${exemptLabels.map(el => `'${el}'`).join(', ')}], see exempt-labels for more details`
+            writeWithDiscussionNumber(
+              discussion.number,
+              `Skipping this discussion because it contains exempt label(s): [${exemptLabels.map(el => `'${el}'`).join(', ')}], see exempt-labels for more details`
             )
           }
           return
         }
 
         if (this.props.verbose) {
-          info(`  [#${discussion.number}] └── Marked as stale`)
+          writeWithDiscussionNumber(discussion.number, `└── Marked as stale`)
         }
         staleDiscussions.push(discussion)
       }
 
       if (this.props.verbose) {
-        await withItemLogGroup(
+        await withDiscussionLogGroup(
           discussion.number,
           `Discussion #${discussion.number}`,
           evaluate

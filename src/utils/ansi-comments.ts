@@ -1,23 +1,14 @@
 import { endGroup, info, startGroup } from '@actions/core'
+import styles, { type ForegroundColor, type Modifier } from 'ansi-styles'
 
 type Message = string | number | boolean
 
-const ANSI = {
-  reset: '\x1b[0m',
-  whiteBright: '\x1b[97m',
-  yellowBright: '\x1b[93m',
-  cyan: '\x1b[36m',
-  green: '\x1b[32m',
-  red: '\x1b[31m',
-  bold: '\x1b[1m'
-} as const
-
-type StyleKey = keyof typeof ANSI
+type Style = keyof Modifier | keyof ForegroundColor
 
 const format =
-  (style: Exclude<StyleKey, 'reset'>) =>
+  (style: Style) =>
   (message: Readonly<Message>): string =>
-    `${ANSI[style]}${message}${ANSI.reset}`
+    `${styles[style].open}${message}${styles[style].close}`
 
 const whiteBright = format('whiteBright')
 const yellowBright = format('yellowBright')
@@ -38,11 +29,18 @@ export const withLogGroup = async (
   }
 }
 
-export const withItemLogGroup = async (
+export const withDiscussionLogGroup = async (
   number: number,
   title: string,
   fn: () => Promise<void> | void
 ): Promise<void> => withLogGroup(`${red(`[#${number}]`)} ${title}`, fn)
+
+export const writeWithDiscussionNumber = (
+  number: number,
+  message: string
+): void => {
+  info(whiteBright(red(`${red(`[#${number}]`)} ${message}`)))
+}
 
 export const writeNoMore = (kind: string): void => {
   info(whiteBright(green(`No more ${kind} found to process. Exiting...`)))
@@ -58,3 +56,6 @@ export const writeStatisticLine = (
 ): void => {
   info(whiteBright(`${label}: ${cyan(value)}`))
 }
+
+export const colorDate = (dateString: string): string => cyan(dateString)
+export const colorNumber = (number: number): string => cyan(number)

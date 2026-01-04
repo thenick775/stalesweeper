@@ -56,6 +56,9 @@
     "transform": {
       "^.+\\.ts$": "ts-jest"
     },
+    "moduleNameMapper": {
+      "^ansi-styles$": "<rootDir>/__mocks__/ansi-styles.js"
+    },
     "coverageReporters": [
       "json-summary",
       "text",
@@ -67,7 +70,8 @@
     ]
   },
   "dependencies": {
-    "@actions/core": "^2.0.1"
+    "@actions/core": "^2.0.1",
+    "ansi-styles": "^6.2.3"
   },
   "devDependencies": {
     "@actions/github": "^6.0.1",

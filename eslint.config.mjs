@@ -7,7 +7,13 @@ import prettierRecommended from 'eslint-plugin-prettier/recommended'
 
 export default [
   {
-    ignores: ['eslint.config.*', '**/dist/**', '**/coverage/**', 'lib/**']
+    ignores: [
+      'eslint.config.*',
+      '**/dist/**',
+      '**/coverage/**',
+      'lib/**',
+      '**/__mocks__/**'
+    ]
   },
   js.configs.recommended,
   github.getFlatConfigs().recommended,
