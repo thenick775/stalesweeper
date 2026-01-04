@@ -61,6 +61,19 @@ export class StaleDiscussionsValidator
           return
         }
 
+        const discussionLabels = discussion.labels?.nodes?.map(dl => dl.name)
+        const exemptLabels = this.props.exemptLabels?.filter(label =>
+          discussionLabels?.includes(label)
+        )
+        if (exemptLabels?.length) {
+          if (this.props.verbose) {
+            info(
+              `  [#${discussion.number}] Skipping this discussion because it contains exempt label(s): [${exemptLabels.map(el => `'${el}'`).join(', ')}], see exempt-labels for more details`
+            )
+          }
+          return
+        }
+
         if (this.props.verbose) {
           info(`  [#${discussion.number}] └── Marked as stale`)
         }

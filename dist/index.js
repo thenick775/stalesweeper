@@ -31261,6 +31261,7 @@ class DiscussionInputProcessor {
         const message = (0, core_1.getInput)('message');
         const daysBeforeClose = parseInt((0, core_1.getInput)('days-before-close'));
         const category = (0, core_1.getInput)('category');
+        const exemptLabelsRaw = (0, core_1.getInput)('exempt-labels');
         const closeUnanswered = (0, core_1.getInput)('close-unanswered') === 'true';
         const closeReason = (0, core_1.getInput)('close-reason');
         const verbose = (0, core_1.getInput)('verbose') === 'true';
@@ -31270,8 +31271,13 @@ class DiscussionInputProcessor {
             message,
             daysBeforeClose,
             category,
+            exemptLabels: exemptLabelsRaw,
             closeReason: closeReason.toUpperCase()
         };
+        const exemptLabels = exemptLabelsRaw
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean);
         const threshold = new Date();
         threshold.setDate(threshold.getDate() - daysBeforeClose);
         try {
@@ -31291,6 +31297,7 @@ class DiscussionInputProcessor {
                 message,
                 threshold,
                 category: category === '' ? undefined : category,
+                exemptLabels,
                 closeUnanswered,
                 closeReason: raw.closeReason,
                 verbose,
@@ -31407,6 +31414,14 @@ class StaleDiscussionsValidator extends graphql_processor_1.GraphqlProcessor {
                     }
                     return;
                 }
+                const discussionLabels = discussion.labels?.nodes?.map(dl => dl.name);
+                const exemptLabels = this.props.exemptLabels?.filter(label => discussionLabels?.includes(label));
+                if (exemptLabels?.length) {
+                    if (this.props.verbose) {
+                        (0, core_1.info)(`  [#${discussion.number}] Skipping this discussion because it contains exempt label(s): [${exemptLabels.map(el => `'${el}'`).join(', ')}], see exempt-labels for more details`);
+                    }
+                    return;
+                }
                 if (this.props.verbose) {
                     (0, core_1.info)(`  [#${discussion.number}] └── Marked as stale`);
                 }
@@ -31453,6 +31468,11 @@ query {
         category {
           name
           isAnswerable
+        }
+        labels(first: 100) {
+          nodes {
+            name
+          }
         }
       }
       pageInfo {

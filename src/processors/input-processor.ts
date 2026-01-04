@@ -10,6 +10,7 @@ interface RawDiscussionInputProps {
   message: string
   daysBeforeClose: number
   category: string | undefined
+  exemptLabels: string
   closeReason: string
 }
 
@@ -23,6 +24,7 @@ export class DiscussionInputProcessor implements Processor<
     const message = getInput('message')
     const daysBeforeClose = parseInt(getInput('days-before-close'))
     const category = getInput('category')
+    const exemptLabelsRaw = getInput('exempt-labels')
     const closeUnanswered = getInput('close-unanswered') === 'true'
     const closeReason = getInput('close-reason')
     const verbose = getInput('verbose') === 'true'
@@ -33,8 +35,14 @@ export class DiscussionInputProcessor implements Processor<
       message,
       daysBeforeClose,
       category,
+      exemptLabels: exemptLabelsRaw,
       closeReason: closeReason.toUpperCase()
     }
+
+    const exemptLabels = exemptLabelsRaw
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean)
 
     const threshold = new Date()
     threshold.setDate(threshold.getDate() - daysBeforeClose)
@@ -56,6 +64,7 @@ export class DiscussionInputProcessor implements Processor<
         message,
         threshold,
         category: category === '' ? undefined : category,
+        exemptLabels,
         closeUnanswered,
         closeReason: raw.closeReason as DiscussionCloseReason,
         verbose,

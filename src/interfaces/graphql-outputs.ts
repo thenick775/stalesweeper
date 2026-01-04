@@ -16,6 +16,11 @@ export interface DiscussionNode {
   updatedAt: string
   isAnswered: boolean | null
   category: DiscussionCategory
+  labels?: {
+    nodes: Array<{
+      name: string
+    }>
+  }
 }
 
 export interface DiscussionCategory {

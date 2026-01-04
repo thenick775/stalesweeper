@@ -5,6 +5,7 @@ export interface DiscussionInputProps {
   message: string
   threshold: Date
   category: string | undefined
+  exemptLabels?: string[]
   closeUnanswered: boolean
   closeReason: DiscussionCloseReason
   verbose: boolean
