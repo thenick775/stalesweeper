@@ -31041,7 +31041,7 @@ async function run() {
     if (processedCount === 0) {
         (0, ansi_comments_1.writeNoMore)('discussions');
     }
-    else if (inputProps.debug) {
+    if (inputProps.debug) {
         (0, core_1.info)('Dry run enabled: no comments/closures were performed.');
     }
     (0, ansi_comments_1.writeStatisticsHeader)();
@@ -31533,15 +31533,21 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.writeStatisticLine = exports.writeStatisticsHeader = exports.writeNoMore = exports.withItemLogGroup = exports.withLogGroup = void 0;
 const core_1 = __nccwpck_require__(7484);
 const ANSI = {
-    reset: '\x1b[39m',
-    white: '\x1b[97m',
-    green: '\x1b[32m',
+    reset: '\x1b[0m',
+    whiteBright: '\x1b[97m',
+    yellowBright: '\x1b[93m',
     cyan: '\x1b[36m',
-    yellow: '\x1b[33m',
-    boldOn: '\x1b[1m',
-    boldOff: '\x1b[22m'
+    green: '\x1b[32m',
+    red: '\x1b[31m',
+    bold: '\x1b[1m'
 };
-const wrap = (s) => `${ANSI.white}${s}${ANSI.reset}${ANSI.reset}`;
+const format = (style) => (message) => `${ANSI[style]}${message}${ANSI.reset}`;
+const whiteBright = format('whiteBright');
+const yellowBright = format('yellowBright');
+const cyan = format('cyan');
+const green = format('green');
+const bold = format('bold');
+const red = format('red');
 const withLogGroup = async (title, fn) => {
     (0, core_1.startGroup)(title);
     try {
@@ -31552,18 +31558,18 @@ const withLogGroup = async (title, fn) => {
     }
 };
 exports.withLogGroup = withLogGroup;
-const withItemLogGroup = async (number, title, fn) => (0, exports.withLogGroup)(`[#${number}] ${title}`, fn);
+const withItemLogGroup = async (number, title, fn) => (0, exports.withLogGroup)(`${red(`[#${number}]`)} ${title}`, fn);
 exports.withItemLogGroup = withItemLogGroup;
 const writeNoMore = (kind) => {
-    (0, core_1.info)(wrap(`${ANSI.green}No more ${kind} found to process. Exiting...${ANSI.reset}`));
+    (0, core_1.info)(whiteBright(green(`No more ${kind} found to process. Exiting...`)));
 };
 exports.writeNoMore = writeNoMore;
 const writeStatisticsHeader = () => {
-    (0, core_1.info)(`${ANSI.white}${ANSI.yellow}${ANSI.boldOn}Statistics:${ANSI.boldOff}${ANSI.reset}${ANSI.reset}`);
+    (0, core_1.info)(whiteBright(yellowBright(bold('Statistics:'))));
 };
 exports.writeStatisticsHeader = writeStatisticsHeader;
 const writeStatisticLine = (label, value) => {
-    (0, core_1.info)(wrap(`${label}: ${ANSI.cyan}${value}${ANSI.reset}`));
+    (0, core_1.info)(whiteBright(`${label}: ${cyan(value)}`));
 };
 exports.writeStatisticLine = writeStatisticLine;
 

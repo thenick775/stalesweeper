@@ -101,7 +101,8 @@ export async function run(): Promise<void> {
 
   if (processedCount === 0) {
     writeNoMore('discussions')
-  } else if (inputProps.debug) {
+  }
+  if (inputProps.debug) {
     info('Dry run enabled: no comments/closures were performed.')
   }
 
