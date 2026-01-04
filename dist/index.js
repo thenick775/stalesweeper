@@ -31048,8 +31048,8 @@ async function run() {
     (0, ansi_comments_1.writeStatisticLine)('Processed discussions', processedCount);
     (0, ansi_comments_1.writeStatisticLine)('Fetched items', fetchedCount);
     (0, ansi_comments_1.writeStatisticLine)('Operations performed', operationsPerformed);
-    const before = beforeRateLimit.result.data.rateLimit;
-    const after = afterRateLimit.result.data.rateLimit;
+    const before = beforeRateLimit.result.rateLimit;
+    const after = afterRateLimit.result.rateLimit;
     if (before.limit >= 0 && before.remaining >= 0) {
         const used = before.limit - before.remaining;
         (0, core_1.info)(`Github API rate used: ${used}`);
@@ -31337,7 +31337,7 @@ class GitHubRateLimitFetcher extends graphql_processor_1.GraphqlProcessor {
         const response = await this.executeQuery((0, ratelimit_queries_1.buildFetchRateLimitQuery)());
         if (response.error) {
             return {
-                result: { data: { rateLimit: { limit: -1, remaining: -1 } } },
+                result: { rateLimit: { limit: -1, remaining: -1 } },
                 success: false,
                 debug: this.props.debug,
                 error: response.error
@@ -31345,7 +31345,7 @@ class GitHubRateLimitFetcher extends graphql_processor_1.GraphqlProcessor {
         }
         if (!response.data) {
             return {
-                result: { data: { rateLimit: { limit: -1, remaining: -1 } } },
+                result: { rateLimit: { limit: -1, remaining: -1 } },
                 success: false,
                 debug: this.props.debug,
                 error: new Error('Missing data in rate limit response')

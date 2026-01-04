@@ -21,7 +21,7 @@ export class GitHubRateLimitFetcher
       await this.executeQuery(buildFetchRateLimitQuery())
     if (response.error) {
       return {
-        result: { data: { rateLimit: { limit: -1, remaining: -1 } } },
+        result: { rateLimit: { limit: -1, remaining: -1 } },
         success: false,
         debug: this.props.debug,
         error: response.error
@@ -30,7 +30,7 @@ export class GitHubRateLimitFetcher
 
     if (!response.data) {
       return {
-        result: { data: { rateLimit: { limit: -1, remaining: -1 } } },
+        result: { rateLimit: { limit: -1, remaining: -1 } },
         success: false,
         debug: this.props.debug,
         error: new Error('Missing data in rate limit response')

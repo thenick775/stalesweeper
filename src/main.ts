@@ -110,8 +110,8 @@ export async function run(): Promise<void> {
   writeStatisticLine('Fetched items', fetchedCount)
   writeStatisticLine('Operations performed', operationsPerformed)
 
-  const before = beforeRateLimit.result.data.rateLimit
-  const after = afterRateLimit.result.data.rateLimit
+  const before = beforeRateLimit.result.rateLimit
+  const after = afterRateLimit.result.rateLimit
   if (before.limit >= 0 && before.remaining >= 0) {
     const used = before.limit - before.remaining
     info(`Github API rate used: ${used}`)
