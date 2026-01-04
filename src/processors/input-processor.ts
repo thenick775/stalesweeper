@@ -60,7 +60,7 @@ export class DiscussionInputProcessor implements Processor<
         closeReason: raw.closeReason as DiscussionCloseReason,
         verbose,
         debug
-      } as DiscussionInputProps,
+      },
       success: true,
       debug
     }
