@@ -24,7 +24,6 @@ $${\textsf{\color{#1ab458}StaleSweeper provides a solution for de-cluttering you
 | exempt-labels     | The labels that mean a discussion is exempt from being marked stale. Separate multiple labels with commas (eg. "label1,label2"). |      No      |                                     | All, no filtering     |
 | close-reason      | The reason to use when closing a discussion.                                                                                     |      No      | `DUPLICATE`, `OUTDATED`, `RESOLVED` | `OUTDATED`            |
 | dry-run           | If set to `true`, the processor will run in debug mode without performing any operations on live discussions.                    |      No      | `true`, `false`                     | `false`               |
-| verbose           | If set to `true`, the processor will print out relevant information on all steps, including usage of GitHub API rate limits.     |      No      | `true`, `false`                     | `false`               |
 
 ## Permissions
 

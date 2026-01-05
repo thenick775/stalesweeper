@@ -25,11 +25,9 @@ export class DiscussionFetcher
     let cursor: string | null = null
 
     while (true) {
-      if (this.props.verbose) {
-        info(
-          `Fetching discussions page for ${input.owner}/${input.repo}, with cursor ${cursor}`
-        )
-      }
+      info(
+        `Fetching discussions page for ${input.owner}/${input.repo}, with cursor ${cursor}`
+      )
 
       const response: WrappedQueryResponse<DiscussionsQueryResponse> =
         await this.executeQuery(

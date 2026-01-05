@@ -30,20 +30,17 @@ export class HandleStaleDiscussions
   ): Promise<SimulationResult<DiscussionNode[]>> {
     for (const discussion of input.discussions) {
       const act = async (): Promise<void> => {
-        if (this.props.verbose) {
-          writeWithDiscussionNumber(
-            discussion.number,
-            `Adding comment and closing discussion #${discussion.number}`
-          )
-        }
+        writeWithDiscussionNumber(
+          discussion.number,
+          `Adding comment and closing discussion #${discussion.number}`
+        )
 
         if (this.props.debug) {
-          if (this.props.verbose) {
-            writeWithDiscussionNumber(
-              discussion.number,
-              `└── [dry-run] Would comment and close this discussion`
-            )
-          }
+          writeWithDiscussionNumber(
+            discussion.number,
+            `└── [dry-run] Would comment and close this discussion`
+          )
+
           return
         }
 
@@ -55,7 +52,7 @@ export class HandleStaleDiscussions
           if (commentResponse.error) {
             throw commentResponse.error
           }
-        } else if (this.props.verbose) {
+        } else {
           writeWithDiscussionNumber(
             discussion.number,
             `└── Skipping comment (no message)`
@@ -72,15 +69,11 @@ export class HandleStaleDiscussions
       }
 
       try {
-        if (this.props.verbose) {
-          await withDiscussionLogGroup(
-            discussion.number,
-            `Discussion #${discussion.number}`,
-            act
-          )
-        } else {
-          await act()
-        }
+        await withDiscussionLogGroup(
+          discussion.number,
+          `Discussion #${discussion.number}`,
+          act
+        )
       } catch (err) {
         return {
           result: [],

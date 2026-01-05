@@ -16,7 +16,6 @@ describe('DiscussionFetcher', () => {
       category: undefined,
       closeUnanswered: false,
       closeReason: 'OUTDATED',
-      verbose: false,
       debug: false
     })
   })
@@ -96,9 +95,8 @@ describe('DiscussionFetcher', () => {
     expect(result.result).toHaveLength(2)
     expect(result.error).toBeUndefined()
   })
-  it('should handle debug and verbose mode correctly', async () => {
+  it('should handle debug mode correctly', async () => {
     fetcher.props.debug = true
-    fetcher.props.verbose = true
 
     infoMock = jest.spyOn(core, 'info').mockImplementation()
 

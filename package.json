@@ -59,6 +59,9 @@
     "moduleNameMapper": {
       "^ansi-styles$": "<rootDir>/__mocks__/ansi-styles.js"
     },
+    "setupFilesAfterEnv": [
+      "<rootDir>/src/jest.setup.ts"
+    ],
     "coverageReporters": [
       "json-summary",
       "text",

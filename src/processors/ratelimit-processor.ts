@@ -13,9 +13,7 @@ export class GitHubRateLimitFetcher
   implements Processor<undefined, GitHubRateLimit>
 {
   async process(): Promise<SimulationResult<GitHubRateLimit>> {
-    if (this.props.verbose) {
-      info('Fetching rate limit')
-    }
+    info('Fetching rate limit')
 
     const response: WrappedQueryResponse<GitHubRateLimit> =
       await this.executeQuery(buildFetchRateLimitQuery())

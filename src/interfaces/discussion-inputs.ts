@@ -8,6 +8,5 @@ export interface DiscussionInputProps {
   exemptLabels?: string[]
   closeUnanswered: boolean
   closeReason: DiscussionCloseReason
-  verbose: boolean
   debug: boolean
 }

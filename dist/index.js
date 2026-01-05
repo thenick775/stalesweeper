@@ -30981,38 +30981,32 @@ async function run() {
         return;
     }
     const fetcher = new discussion_processor_1.DiscussionFetcher(inputProps);
-    if (inputProps.verbose)
-        (0, core_1.startGroup)('Fetching discussions');
+    (0, core_1.startGroup)('Fetching discussions');
     const discussions = await fetcher.process({
         owner: github_1.context.repo.owner,
         repo: github_1.context.repo.repo
     });
-    if (inputProps.verbose)
-        (0, core_1.endGroup)();
+    (0, core_1.endGroup)();
     if (discussions.error) {
         (0, core_1.setFailed)(discussions.error);
         return;
     }
     const staleValidator = new stale_processor_1.StaleDiscussionsValidator(inputProps);
-    if (inputProps.verbose)
-        (0, core_1.startGroup)('Determining stale discussions');
+    (0, core_1.startGroup)('Determining stale discussions');
     const staleDiscussions = await staleValidator.process(discussions.result);
-    if (inputProps.verbose)
-        (0, core_1.endGroup)();
+    (0, core_1.endGroup)();
     if (staleDiscussions.error) {
         (0, core_1.setFailed)(staleDiscussions.error);
         return;
     }
     const staleHandler = new handle_stale_processor_1.HandleStaleDiscussions(inputProps);
-    if (inputProps.verbose)
-        (0, core_1.startGroup)('Handling stale discussions');
+    (0, core_1.startGroup)('Handling stale discussions');
     const handledStaleDiscussions = await staleHandler.process({
         discussions: staleDiscussions.result,
         owner: github_1.context.repo.owner,
         repo: github_1.context.repo.repo
     });
-    if (inputProps.verbose)
-        (0, core_1.endGroup)();
+    (0, core_1.endGroup)();
     if (handledStaleDiscussions.error) {
         (0, core_1.setFailed)(handledStaleDiscussions.error);
         return;
@@ -31024,7 +31018,7 @@ async function run() {
     }
     const fetchedCount = discussions.result.length;
     const processedCount = handledStaleDiscussions.result.length;
-    const operationsPerformed = inputProps.debug ? 0 : processedCount;
+    const discussionsClosed = inputProps.debug ? 0 : processedCount;
     if (processedCount === 0) {
         (0, ansi_comments_1.writeNoMore)('discussions');
     }
@@ -31034,7 +31028,7 @@ async function run() {
     (0, ansi_comments_1.writeStatisticsHeader)();
     (0, ansi_comments_1.writeStatisticLine)('Processed discussions', processedCount);
     (0, ansi_comments_1.writeStatisticLine)('Fetched items', fetchedCount);
-    (0, ansi_comments_1.writeStatisticLine)('Operations performed', operationsPerformed);
+    (0, ansi_comments_1.writeStatisticLine)('Discussions closed', discussionsClosed);
     const before = beforeRateLimit.result.rateLimit;
     const after = afterRateLimit.result.rateLimit;
     if (before.remaining >= 0 && after.remaining >= 0) {
@@ -31068,9 +31062,7 @@ class DiscussionFetcher extends graphql_processor_1.GraphqlProcessor {
         let discussions = [];
         let cursor = null;
         while (true) {
-            if (this.props.verbose) {
-                (0, core_1.info)(`Fetching discussions page for ${input.owner}/${input.repo}, with cursor ${cursor}`);
-            }
+            (0, core_1.info)(`Fetching discussions page for ${input.owner}/${input.repo}, with cursor ${cursor}`);
             const response = await this.executeQuery((0, discussion_queries_1.buildFetchAllDiscussionsQuery)(input.owner, input.repo, cursor));
             if (response.error) {
                 return {
@@ -31179,13 +31171,9 @@ class HandleStaleDiscussions extends graphql_processor_1.GraphqlProcessor {
     async process(input) {
         for (const discussion of input.discussions) {
             const act = async () => {
-                if (this.props.verbose) {
-                    (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `Adding comment and closing discussion #${discussion.number}`);
-                }
+                (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `Adding comment and closing discussion #${discussion.number}`);
                 if (this.props.debug) {
-                    if (this.props.verbose) {
-                        (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `└── [dry-run] Would comment and close this discussion`);
-                    }
+                    (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `└── [dry-run] Would comment and close this discussion`);
                     return;
                 }
                 if (this.props.message && this.props.message !== '') {
@@ -31194,7 +31182,7 @@ class HandleStaleDiscussions extends graphql_processor_1.GraphqlProcessor {
                         throw commentResponse.error;
                     }
                 }
-                else if (this.props.verbose) {
+                else {
                     (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `└── Skipping comment (no message)`);
                 }
                 const closeResponse = await this.executeQuery((0, discussion_queries_1.buildCloseDiscussionQuery)(discussion.id, this.props.closeReason));
@@ -31203,12 +31191,7 @@ class HandleStaleDiscussions extends graphql_processor_1.GraphqlProcessor {
                 }
             };
             try {
-                if (this.props.verbose) {
-                    await (0, ansi_comments_1.withDiscussionLogGroup)(discussion.number, `Discussion #${discussion.number}`, act);
-                }
-                else {
-                    await act();
-                }
+                await (0, ansi_comments_1.withDiscussionLogGroup)(discussion.number, `Discussion #${discussion.number}`, act);
             }
             catch (err) {
                 return {
@@ -31250,7 +31233,6 @@ class DiscussionInputProcessor {
         const exemptLabelsRaw = (0, core_1.getInput)('exempt-labels');
         const closeUnanswered = (0, core_1.getInput)('close-unanswered') === 'true';
         const closeReason = (0, core_1.getInput)('close-reason');
-        const verbose = (0, core_1.getInput)('verbose') === 'true';
         const debug = (0, core_1.getInput)('dry-run') === 'true';
         const raw = {
             repoToken,
@@ -31286,7 +31268,6 @@ class DiscussionInputProcessor {
                 exemptLabels,
                 closeUnanswered,
                 closeReason: raw.closeReason,
-                verbose,
                 debug
             },
             success: true,
@@ -31324,9 +31305,7 @@ const graphql_processor_1 = __nccwpck_require__(1993);
 const ratelimit_queries_1 = __nccwpck_require__(2704);
 class GitHubRateLimitFetcher extends graphql_processor_1.GraphqlProcessor {
     async process() {
-        if (this.props.verbose) {
-            (0, core_1.info)('Fetching rate limit');
-        }
+        (0, core_1.info)('Fetching rate limit');
         const response = await this.executeQuery((0, ratelimit_queries_1.buildFetchRateLimitQuery)());
         if (response.error) {
             return {
@@ -31369,57 +31348,38 @@ const core_1 = __nccwpck_require__(7484);
 const ansi_comments_1 = __nccwpck_require__(7305);
 class StaleDiscussionsValidator extends graphql_processor_1.GraphqlProcessor {
     async process(discussions) {
-        if (this.props.verbose) {
-            (0, core_1.info)(`Stale if last updated before: ${(0, ansi_comments_1.colorDate)(this.props.threshold.toISOString())}`);
-        }
+        (0, core_1.info)(`Stale if last updated before: ${(0, ansi_comments_1.colorDate)(this.props.threshold.toISOString())}`);
         const staleDiscussions = [];
         for (const discussion of discussions) {
             const evaluate = () => {
-                if (this.props.verbose) {
-                    (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `Found this discussion last updated at: ${(0, ansi_comments_1.colorDate)(discussion.updatedAt)}`);
-                }
+                (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `Found this discussion last updated at: ${(0, ansi_comments_1.colorDate)(discussion.updatedAt)}`);
                 if (discussion.category.isAnswerable &&
                     !this.props.closeUnanswered &&
                     !discussion.isAnswered) {
-                    if (this.props.verbose) {
-                        (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `Skipping because it is unanswered and close-unanswered is false`);
-                    }
+                    (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `Skipping because it is unanswered and close-unanswered is false`);
                     return;
                 }
                 if (this.props.category &&
                     discussion.category.name !== this.props.category) {
-                    if (this.props.verbose) {
-                        (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `Skipping because it is in category "${discussion.category.name}" (expected "${this.props.category}")`);
-                    }
+                    (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `Skipping because it is in category "${discussion.category.name}" (expected "${this.props.category}")`);
                     return;
                 }
                 const discussionUpdatedAt = new Date(discussion.updatedAt);
                 if (!(0, time_1.isBefore)(discussionUpdatedAt, this.props.threshold)) {
-                    if (this.props.verbose) {
-                        const daysRemaining = (0, time_1.daysRemainingUntilStale)(discussionUpdatedAt, this.props.threshold);
-                        (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `└── Not stale yet, days before stale: ${(0, ansi_comments_1.colorNumber)(daysRemaining)}`);
-                    }
+                    const daysRemaining = (0, time_1.daysRemainingUntilStale)(discussionUpdatedAt, this.props.threshold);
+                    (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `└── Not stale yet, days before stale: ${(0, ansi_comments_1.colorNumber)(daysRemaining)}`);
                     return;
                 }
                 const discussionLabels = discussion.labels?.nodes?.map(dl => dl.name);
                 const exemptLabels = this.props.exemptLabels?.filter(label => discussionLabels?.includes(label));
                 if (exemptLabels?.length) {
-                    if (this.props.verbose) {
-                        (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `└── Skipping this discussion because it contains exempt label(s): [${exemptLabels.map(el => `'${el}'`).join(', ')}]`);
-                    }
+                    (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `└── Skipping this discussion because it contains exempt label(s): [${exemptLabels.map(el => `'${el}'`).join(', ')}]`);
                     return;
                 }
-                if (this.props.verbose) {
-                    (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `└── Marked as stale`);
-                }
+                (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `└── Marked as stale`);
                 staleDiscussions.push(discussion);
             };
-            if (this.props.verbose) {
-                await (0, ansi_comments_1.withDiscussionLogGroup)(discussion.number, `Discussion #${discussion.number}`, evaluate);
-            }
-            else {
-                evaluate();
-            }
+            await (0, ansi_comments_1.withDiscussionLogGroup)(discussion.number, `Discussion #${discussion.number}`, evaluate);
         }
         return {
             result: staleDiscussions,

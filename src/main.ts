@@ -39,12 +39,12 @@ export async function run(): Promise<void> {
   }
 
   const fetcher = new DiscussionFetcher(inputProps)
-  if (inputProps.verbose) startGroup('Fetching discussions')
+  startGroup('Fetching discussions')
   const discussions = await fetcher.process({
     owner: context.repo.owner,
     repo: context.repo.repo
   })
-  if (inputProps.verbose) endGroup()
+  endGroup()
 
   if (discussions.error) {
     setFailed(discussions.error)
@@ -52,9 +52,9 @@ export async function run(): Promise<void> {
   }
 
   const staleValidator = new StaleDiscussionsValidator(inputProps)
-  if (inputProps.verbose) startGroup('Determining stale discussions')
+  startGroup('Determining stale discussions')
   const staleDiscussions = await staleValidator.process(discussions.result)
-  if (inputProps.verbose) endGroup()
+  endGroup()
 
   if (staleDiscussions.error) {
     setFailed(staleDiscussions.error)
@@ -62,13 +62,13 @@ export async function run(): Promise<void> {
   }
 
   const staleHandler = new HandleStaleDiscussions(inputProps)
-  if (inputProps.verbose) startGroup('Handling stale discussions')
+  startGroup('Handling stale discussions')
   const handledStaleDiscussions = await staleHandler.process({
     discussions: staleDiscussions.result,
     owner: context.repo.owner,
     repo: context.repo.repo
   })
-  if (inputProps.verbose) endGroup()
+  endGroup()
 
   if (handledStaleDiscussions.error) {
     setFailed(handledStaleDiscussions.error)
@@ -83,7 +83,7 @@ export async function run(): Promise<void> {
 
   const fetchedCount = discussions.result.length
   const processedCount = handledStaleDiscussions.result.length
-  const operationsPerformed = inputProps.debug ? 0 : processedCount
+  const discussionsClosed = inputProps.debug ? 0 : processedCount
 
   if (processedCount === 0) {
     writeNoMore('discussions')
@@ -95,7 +95,7 @@ export async function run(): Promise<void> {
   writeStatisticsHeader()
   writeStatisticLine('Processed discussions', processedCount)
   writeStatisticLine('Fetched items', fetchedCount)
-  writeStatisticLine('Operations performed', operationsPerformed)
+  writeStatisticLine('Discussions closed', discussionsClosed)
 
   const before = beforeRateLimit.result.rateLimit
   const after = afterRateLimit.result.rateLimit

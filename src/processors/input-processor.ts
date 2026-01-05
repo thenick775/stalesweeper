@@ -27,7 +27,6 @@ export class DiscussionInputProcessor implements Processor<
     const exemptLabelsRaw = getInput('exempt-labels')
     const closeUnanswered = getInput('close-unanswered') === 'true'
     const closeReason = getInput('close-reason')
-    const verbose = getInput('verbose') === 'true'
     const debug = getInput('dry-run') === 'true'
 
     const raw: RawDiscussionInputProps = {
@@ -67,7 +66,6 @@ export class DiscussionInputProcessor implements Processor<
         exemptLabels,
         closeUnanswered,
         closeReason: raw.closeReason as DiscussionCloseReason,
-        verbose,
         debug
       },
       success: true,
