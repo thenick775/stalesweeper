@@ -31405,7 +31405,7 @@ class StaleDiscussionsValidator extends graphql_processor_1.GraphqlProcessor {
                 const exemptLabels = this.props.exemptLabels?.filter(label => discussionLabels?.includes(label));
                 if (exemptLabels?.length) {
                     if (this.props.verbose) {
-                        (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `└── Skipping this discussion because it contains exempt label(s): [${exemptLabels.map(el => `'${el}'`).join(', ')}], see exempt-labels for more details`);
+                        (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `└── Skipping this discussion because it contains exempt label(s): [${exemptLabels.map(el => `'${el}'`).join(', ')}]`);
                     }
                     return;
                 }

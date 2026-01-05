@@ -84,7 +84,7 @@ export class StaleDiscussionsValidator
           if (this.props.verbose) {
             writeWithDiscussionNumber(
               discussion.number,
-              `└── Skipping this discussion because it contains exempt label(s): [${exemptLabels.map(el => `'${el}'`).join(', ')}], see exempt-labels for more details`
+              `└── Skipping this discussion because it contains exempt label(s): [${exemptLabels.map(el => `'${el}'`).join(', ')}]`
             )
           }
           return
