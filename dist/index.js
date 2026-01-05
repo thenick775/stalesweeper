@@ -31370,7 +31370,7 @@ const ansi_comments_1 = __nccwpck_require__(7305);
 class StaleDiscussionsValidator extends graphql_processor_1.GraphqlProcessor {
     async process(discussions) {
         if (this.props.verbose) {
-            (0, core_1.info)(`Stale if last updated before: ${(0, ansi_comments_1.colorDate)(this.props.threshold.toUTCString())}`);
+            (0, core_1.info)(`Stale if last updated before: ${(0, ansi_comments_1.colorDate)(this.props.threshold.toISOString())}`);
         }
         const staleDiscussions = [];
         for (const discussion of discussions) {
@@ -31405,7 +31405,7 @@ class StaleDiscussionsValidator extends graphql_processor_1.GraphqlProcessor {
                 const exemptLabels = this.props.exemptLabels?.filter(label => discussionLabels?.includes(label));
                 if (exemptLabels?.length) {
                     if (this.props.verbose) {
-                        (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `Skipping this discussion because it contains exempt label(s): [${exemptLabels.map(el => `'${el}'`).join(', ')}], see exempt-labels for more details`);
+                        (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `└── Skipping this discussion because it contains exempt label(s): [${exemptLabels.map(el => `'${el}'`).join(', ')}], see exempt-labels for more details`);
                     }
                     return;
                 }
