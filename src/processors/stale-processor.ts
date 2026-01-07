@@ -44,12 +44,12 @@ export class StaleDiscussionsValidator
         }
 
         if (
-          this.props.category &&
-          discussion.category.name !== this.props.category
+          this.props.categories?.length &&
+          !this.props.categories.includes(discussion.category.name)
         ) {
           writeWithDiscussionNumber(
             discussion.number,
-            `Skipping because it is in category "${discussion.category.name}" (expected "${this.props.category}")`
+            `Skipping because it is in category "${discussion.category.name}" (expected "${this.props.categories.join(', ')}")`
           )
 
           return

@@ -2,7 +2,7 @@ name: 'StaleSweeper'
 description:
   'Automatically closes stale discussions to declutter your GitHub Discussion
   space.'
-author: 'Steffen Wirenfeldt Karlsson'
+author: 'Nicholas VanCise'
 branding:
   icon: 'message-circle'
   color: 'green'
@@ -28,9 +28,10 @@ inputs:
       will also be closed.'
     required: false
     default: 'false'
-  category:
+  categories:
     description:
-      'The category of discussions to close. Defaults to all discussion types'
+      'The category of discussions to close, separate multiple labels with
+      commas (eg. "category1,category2"). Defaults to all discussion types'
     required: false
   exempt-labels:
     description:

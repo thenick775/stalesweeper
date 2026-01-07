@@ -31229,7 +31229,7 @@ class DiscussionInputProcessor {
         const repoToken = (0, core_1.getInput)('repo-token');
         const message = (0, core_1.getInput)('message');
         const daysBeforeClose = parseInt((0, core_1.getInput)('days-before-close'));
-        const category = (0, core_1.getInput)('category');
+        const categories = (0, core_1.getInput)('categories');
         const exemptLabelsRaw = (0, core_1.getInput)('exempt-labels');
         const closeUnanswered = (0, core_1.getInput)('close-unanswered') === 'true';
         const closeReason = (0, core_1.getInput)('close-reason');
@@ -31238,13 +31238,17 @@ class DiscussionInputProcessor {
             repoToken,
             message,
             daysBeforeClose,
-            category,
+            categories,
             exemptLabels: exemptLabelsRaw,
             closeReason: closeReason.toUpperCase()
         };
         const exemptLabels = exemptLabelsRaw
             .split(',')
             .map(s => s.trim())
+            .filter(Boolean);
+        const categoriesList = categories
+            .split(',')
+            .map(c => c.trim())
             .filter(Boolean);
         const threshold = new Date();
         threshold.setDate(threshold.getDate() - daysBeforeClose);
@@ -31264,7 +31268,7 @@ class DiscussionInputProcessor {
                 repoToken,
                 message,
                 threshold,
-                category: category === '' ? undefined : category,
+                categories: categoriesList.length > 0 ? categoriesList : undefined,
                 exemptLabels,
                 closeUnanswered,
                 closeReason: raw.closeReason,
@@ -31359,9 +31363,9 @@ class StaleDiscussionsValidator extends graphql_processor_1.GraphqlProcessor {
                     (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `Skipping because it is unanswered and close-unanswered is false`);
                     return;
                 }
-                if (this.props.category &&
-                    discussion.category.name !== this.props.category) {
-                    (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `Skipping because it is in category "${discussion.category.name}" (expected "${this.props.category}")`);
+                if (this.props.categories?.length &&
+                    !this.props.categories.includes(discussion.category.name)) {
+                    (0, ansi_comments_1.writeWithDiscussionNumber)(discussion.number, `Skipping because it is in category "${discussion.category.name}" (expected "${this.props.categories.join(', ')}")`);
                     return;
                 }
                 const discussionUpdatedAt = new Date(discussion.updatedAt);

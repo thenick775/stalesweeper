@@ -4,7 +4,7 @@ export interface DiscussionInputProps {
   repoToken: string
   message: string
   threshold: Date
-  category: string | undefined
+  categories?: string[]
   exemptLabels?: string[]
   closeUnanswered: boolean
   closeReason: DiscussionCloseReason

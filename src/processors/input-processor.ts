@@ -9,7 +9,7 @@ interface RawDiscussionInputProps {
   repoToken: string
   message: string
   daysBeforeClose: number
-  category: string | undefined
+  categories: string | undefined
   exemptLabels: string
   closeReason: string
 }
@@ -23,7 +23,7 @@ export class DiscussionInputProcessor implements Processor<
     const repoToken = getInput('repo-token')
     const message = getInput('message')
     const daysBeforeClose = parseInt(getInput('days-before-close'))
-    const category = getInput('category')
+    const categories = getInput('categories')
     const exemptLabelsRaw = getInput('exempt-labels')
     const closeUnanswered = getInput('close-unanswered') === 'true'
     const closeReason = getInput('close-reason')
@@ -33,7 +33,7 @@ export class DiscussionInputProcessor implements Processor<
       repoToken,
       message,
       daysBeforeClose,
-      category,
+      categories,
       exemptLabels: exemptLabelsRaw,
       closeReason: closeReason.toUpperCase()
     }
@@ -41,6 +41,10 @@ export class DiscussionInputProcessor implements Processor<
     const exemptLabels = exemptLabelsRaw
       .split(',')
       .map(s => s.trim())
+      .filter(Boolean)
+    const categoriesList = categories
+      .split(',')
+      .map(c => c.trim())
       .filter(Boolean)
 
     const threshold = new Date()
@@ -62,7 +66,7 @@ export class DiscussionInputProcessor implements Processor<
         repoToken,
         message,
         threshold,
-        category: category === '' ? undefined : category,
+        categories: categoriesList.length > 0 ? categoriesList : undefined,
         exemptLabels,
         closeUnanswered,
         closeReason: raw.closeReason as DiscussionCloseReason,

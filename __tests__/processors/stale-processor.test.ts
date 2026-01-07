@@ -14,7 +14,7 @@ describe('StaleDiscussionsValidator', () => {
       repoToken: 'my-token',
       message: 'my-message',
       threshold: new Date('2023-01-01T00:00:00Z'),
-      category: 'category',
+      categories: ['category'],
       closeUnanswered: false,
       closeReason: 'OUTDATED',
       debug: false
@@ -82,7 +82,7 @@ describe('StaleDiscussionsValidator', () => {
     expect(result.result[0]).toEqual(discussions[0])
     expect(result.result[1]).toEqual(discussions[2])
 
-    validator.props.category = undefined
+    validator.props.categories = undefined
     const resultWithoutCategory = await validator.process(discussions)
     expect(resultWithoutCategory.success).toBe(true)
     expect(resultWithoutCategory.debug).toBe(false)
