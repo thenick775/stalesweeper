@@ -6,6 +6,7 @@ import { StaleDiscussionsValidator } from './processors/stale-processor'
 import { HandleStaleDiscussions } from './processors/handle-stale-processor'
 import { GitHubRateLimitFetcher } from './processors/ratelimit-processor'
 import {
+  statisticsLine,
   writeNoMore,
   writeStatisticLine,
   writeStatisticsHeader
@@ -89,13 +90,37 @@ export async function run(): Promise<void> {
     writeNoMore('discussions')
   }
   if (inputProps.debug) {
+    if (discussionsClosed > 0) {
+      info('Would have closed discussions:')
+      info(
+        handledStaleDiscussions.result
+          .map(
+            d =>
+              `- #${d.number}: https://github.com/${context.repo.owner}/${context.repo.repo}/discussions/${d.number}`
+          )
+          .join('\n')
+      )
+    }
     info('Dry run enabled: no comments/closures were performed.')
   }
 
   writeStatisticsHeader()
   writeStatisticLine('Processed discussions', processedCount)
   writeStatisticLine('Fetched items', fetchedCount)
-  writeStatisticLine('Discussions closed', discussionsClosed)
+  if (discussionsClosed > 0) {
+    startGroup(statisticsLine('Discussions closed', discussionsClosed))
+    info(
+      handledStaleDiscussions.result
+        .map(
+          d =>
+            `- #${d.number}: https://github.com/${context.repo.owner}/${context.repo.repo}/discussions/${d.number}`
+        )
+        .join('\n')
+    )
+    endGroup()
+  } else {
+    writeStatisticLine('Discussions closed', discussionsClosed)
+  }
 
   const before = beforeRateLimit.result.rateLimit
   const after = afterRateLimit.result.rateLimit

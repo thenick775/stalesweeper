@@ -50,11 +50,14 @@ export const writeStatisticsHeader = (): void => {
   info(whiteBright(yellowBright(bold('Statistics:'))))
 }
 
+export const statisticsLine = (label: string, value: number | string): string =>
+  whiteBright(`${label}: ${cyan(value)}`)
+
 export const writeStatisticLine = (
   label: string,
   value: number | string
 ): void => {
-  info(whiteBright(`${label}: ${cyan(value)}`))
+  info(statisticsLine(label, value))
 }
 
 export const colorDate = (dateString: string): string => cyan(dateString)

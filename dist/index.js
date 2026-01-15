@@ -31023,12 +31023,27 @@ async function run() {
         (0, ansi_comments_1.writeNoMore)('discussions');
     }
     if (inputProps.debug) {
+        if (discussionsClosed > 0) {
+            (0, core_1.info)('Would have closed discussions:');
+            (0, core_1.info)(handledStaleDiscussions.result
+                .map(d => `- #${d.number}: https://github.com/${github_1.context.repo.owner}/${github_1.context.repo.repo}/discussions/${d.number}`)
+                .join('\n'));
+        }
         (0, core_1.info)('Dry run enabled: no comments/closures were performed.');
     }
     (0, ansi_comments_1.writeStatisticsHeader)();
     (0, ansi_comments_1.writeStatisticLine)('Processed discussions', processedCount);
     (0, ansi_comments_1.writeStatisticLine)('Fetched items', fetchedCount);
-    (0, ansi_comments_1.writeStatisticLine)('Discussions closed', discussionsClosed);
+    if (discussionsClosed > 0) {
+        (0, core_1.startGroup)((0, ansi_comments_1.statisticsLine)('Discussions closed', discussionsClosed));
+        (0, core_1.info)(handledStaleDiscussions.result
+            .map(d => `- #${d.number}: https://github.com/${github_1.context.repo.owner}/${github_1.context.repo.repo}/discussions/${d.number}`)
+            .join('\n'));
+        (0, core_1.endGroup)();
+    }
+    else {
+        (0, ansi_comments_1.writeStatisticLine)('Discussions closed', discussionsClosed);
+    }
     const before = beforeRateLimit.result.rateLimit;
     const after = afterRateLimit.result.rateLimit;
     if (before.remaining >= 0 && after.remaining >= 0) {
@@ -31484,7 +31499,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.colorNumber = exports.colorDate = exports.writeStatisticLine = exports.writeStatisticsHeader = exports.writeNoMore = exports.writeWithDiscussionNumber = exports.withDiscussionLogGroup = exports.withLogGroup = void 0;
+exports.colorNumber = exports.colorDate = exports.writeStatisticLine = exports.statisticsLine = exports.writeStatisticsHeader = exports.writeNoMore = exports.writeWithDiscussionNumber = exports.withDiscussionLogGroup = exports.withLogGroup = void 0;
 const core_1 = __nccwpck_require__(7484);
 const ansi_styles_1 = __importDefault(__nccwpck_require__(7865));
 const format = (style) => (message) => `${ansi_styles_1.default[style].open}${message}${ansi_styles_1.default[style].close}`;
@@ -31518,8 +31533,10 @@ const writeStatisticsHeader = () => {
     (0, core_1.info)(whiteBright(yellowBright(bold('Statistics:'))));
 };
 exports.writeStatisticsHeader = writeStatisticsHeader;
+const statisticsLine = (label, value) => whiteBright(`${label}: ${cyan(value)}`);
+exports.statisticsLine = statisticsLine;
 const writeStatisticLine = (label, value) => {
-    (0, core_1.info)(whiteBright(`${label}: ${cyan(value)}`));
+    (0, core_1.info)((0, exports.statisticsLine)(label, value));
 };
 exports.writeStatisticLine = writeStatisticLine;
 const colorDate = (dateString) => cyan(dateString);
