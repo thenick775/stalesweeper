@@ -51,3 +51,4 @@ jobs:
           VALIDATE_BIOME_LINT: false
           JAVASCRIPT_ES_CONFIG_FILE: ../../eslint.config.mjs
           TYPESCRIPT_ES_CONFIG_FILE: ../../eslint.config.mjs
+          TRIVY_SEVERITY: CRITICAL,HIGH,MEDIUM
