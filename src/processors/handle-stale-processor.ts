@@ -14,6 +14,7 @@ import {
   withDiscussionLogGroup,
   writeWithDiscussionNumber
 } from '../utils/ansi-comments'
+import { delay } from '../utils/delay'
 
 export interface HandleStaleDiscussionsProps {
   discussions: DiscussionNode[]
@@ -29,6 +30,8 @@ export class HandleStaleDiscussions
     input: HandleStaleDiscussionsProps
   ): Promise<SimulationResult<DiscussionNode[]>> {
     for (const discussion of input.discussions) {
+      await delay(this.props.rateLimitDelayMs)
+
       const act = async (): Promise<void> => {
         writeWithDiscussionNumber(
           discussion.number,

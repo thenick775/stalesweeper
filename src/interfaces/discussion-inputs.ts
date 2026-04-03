@@ -9,4 +9,5 @@ export interface DiscussionInputProps {
   closeUnanswered: boolean
   closeReason: DiscussionCloseReason
   debug: boolean
+  rateLimitDelayMs: number
 }

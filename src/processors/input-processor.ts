@@ -28,6 +28,7 @@ export class DiscussionInputProcessor implements Processor<
     const closeUnanswered = getInput('close-unanswered') === 'true'
     const closeReason = getInput('close-reason')
     const debug = getInput('dry-run') === 'true'
+    const rateLimitDelayMs = parseInt(getInput('rate-limit-delay'))
 
     const raw: RawDiscussionInputProps = {
       repoToken,
@@ -70,7 +71,8 @@ export class DiscussionInputProcessor implements Processor<
         exemptLabels,
         closeUnanswered,
         closeReason: raw.closeReason as DiscussionCloseReason,
-        debug
+        debug,
+        rateLimitDelayMs
       },
       success: true,
       debug
