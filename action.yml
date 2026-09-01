@@ -51,6 +51,11 @@ inputs:
       any operations on live discussions.'
     required: false
     default: 'false'
+  rate-limit-delay:
+    description:
+      'Delay in milliseconds between GitHub API mutations. Default: 1000'
+    required: false
+    default: '1000'
 
 outputs:
   closed-discussions:
